@@ -1,0 +1,158 @@
+# =========================
+# Build Folders
+# =========================
+bin/
+obj/
+out/
+
+# =========================
+# NuGet
+# =========================
+packages/
+*.nupkg
+.nuget/
+
+# =========================
+# Rider / ReSharper
+# =========================
+.idea/
+*.sln.iml
+*.DotSettings.user
+_ReSharper.Caches/
+*.DotSettings
+
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# ASP.NET Core / Secrets
+# =========================
+secrets.json
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.Development.json
+
+# =========================
+# Environment Files
+# =========================
+.env
+.env.*
+
+# =========================
+# EF Core
+# =========================
+*.dbmdl
+*.jfm
+*.psess
+*.vsp
+*.vspx
+
+# =========================
+# Publish Outputs
+# =========================
+publish/
+wwwroot/uploads/
+
+# =========================
+# Docker
+# =========================
+docker-data/
+postgres-data/
+.pgdata/
+
+# =========================
+# Node Modules (Frontend)
+# =========================
+node_modules/
+dist/
+build/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.temp
+*.cache
+
+# =========================
+# Test Results
+# =========================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# =========================
+# JetBrains Rider Local History
+# =========================
+.localhistory/
+
+# =========================
+# Serilog / Elastic Logs
+# =========================
+*.jsonl
+
+# =========================
+# Kubernetes / Helm Secrets
+# =========================
+*.secret.yaml
+*.secrets.yaml
+
+# =========================
+# Generated Files
+# =========================
+Generated/
+
+# =========================
+# User-specific files
+# =========================
+*.rsuser
+
+# =========================
+# Dotnet Watch
+# =========================
+.hotreload/
+
+# =========================
+# Backup Files
+# =========================
+*.bak
+
+# =========================
+# SQLite
+# =========================
+*.db
+*.sqlite
+
+# =========================
+# Coverage Reports
+# =========================
+coverage-report/
+
+# =========================
+# Docker Overrides
+# =========================
+docker-compose.override.yml
