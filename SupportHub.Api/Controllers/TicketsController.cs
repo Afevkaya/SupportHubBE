@@ -11,6 +11,20 @@ namespace SupportHub.Api.Controllers
     public class TicketsController : ControllerBase
     {
         private static readonly List<Ticket> Tickets = [];
+        
+        [HttpGet]
+        public IActionResult GetTickets()
+        {
+            var response = Tickets.Select(t => new ResponseGetTicket(
+                t.Id,
+                t.Title,
+                t.Status,
+                t.CreatedDate
+            )).ToList();
+            return Ok(response);
+        }
+        
+        
         [HttpPost]
         public IActionResult CreateTicket([FromBody] RequestCreateTicket request)
         {
