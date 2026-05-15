@@ -6,15 +6,24 @@ namespace SupportHub.Api.Repositories.Tickets;
 public class TicketRepository : ITicketRepository
 {
     private static readonly List<Ticket> Tickets = [];
+
     public Task<List<Ticket>> GetAllAsync()
     {
-        return Task.FromResult(Tickets);
+        return Task.FromResult(Tickets.ToList());
     }
+    
+    public Task<List<Ticket>> GetOpenTicketsAsync()
+    {
+        var openTickets = Tickets.Where(t => t is { Status: nameof(TicketStatusType.Open) }).ToList();
+        return Task.FromResult(openTickets);
+    }
+
     public Task<Ticket> CreateAsync(Ticket ticket)
     {
         Tickets.Add(ticket);
         return Task.FromResult(ticket);
     }
+
     public Task<Ticket> UpdateStatusAsync(Guid id, TicketStatusType status)
     {
         var ticket = Tickets.FirstOrDefault(t => t.Id == id);

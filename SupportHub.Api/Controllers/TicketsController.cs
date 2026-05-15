@@ -14,12 +14,21 @@ namespace SupportHub.Api.Controllers
             var response = await ticketService.GetTicketsAsync();
             return Ok(response);
         }
+        
+        [HttpGet("open")]
+        public async Task<IActionResult> GetOpenTickets()
+        {
+            var response = await ticketService.GetOpenTicketsAsync();
+            return Ok(response);
+        }
+        
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] RequestCreateTicket request)
         {
             var response = await ticketService.CreateTicketAsync(request);
             return Ok(response);
         }
+        
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] RequestUpdateTicketStatus request)
         {
