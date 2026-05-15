@@ -1,5 +1,6 @@
 using SupportHub.Api.Repositories.Tickets;
 using SupportHub.Api.Services.Tickets;
+using SupportHub.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,9 @@ builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// Global exception middleware should be early in the pipeline so it can catch exceptions
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
