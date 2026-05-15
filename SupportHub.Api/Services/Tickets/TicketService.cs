@@ -2,24 +2,20 @@
 using SupportHub.Api.Enums;
 using SupportHub.Api.Models.Requests;
 using SupportHub.Api.Models.Responses;
+using SupportHub.Api.Repositories.Tickets;
 
 namespace SupportHub.Api.Services.Tickets;
 
-public class TicketService : ITicketService
+public class TicketService(ITicketRepository ticketRepository) : ITicketService
 {
-    private static readonly List<Ticket> Tickets = [];
     
-    public Task<List<ResponseGetTicket>> GetTicketsAsync()
+    public async Task<List<ResponseGetTicket>> GetTicketsAsync()
     {
-        var response = Tickets.Select(t => new ResponseGetTicket(
-            t.Id,
-            t.Title,
-            t.Status,
-            t.CreatedDate
-        )).ToList();
-        return Task.FromResult(response);
+        var result = await ticketRepository.GetAllAsync();
+        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title, x.Status, x.CreatedDate)).ToList();
+        return response;
     }
-    public Task<ResponseCreateTicket> CreateTicketAsync(RequestCreateTicket request)
+    public async Task<ResponseCreateTicket> CreateTicketAsync(RequestCreateTicket request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -34,14 +30,14 @@ public class TicketService : ITicketService
             Status = nameof(TicketStatusType.Open),
             CreatedDate = DateTime.UtcNow
         };
-        Tickets.Add(ticket);
+        var result = await ticketRepository.CreateAsync(ticket);
         var response = new ResponseCreateTicket(
-            ticket.Id,
-            ticket.Title,
-            ticket.Description,
-            ticket.Status,
-            ticket.CreatedDate
+            result.Id,
+            result.Title,
+            result.Description,
+            result.Status,
+            result.CreatedDate
         );
-        return Task.FromResult(response);
+        return response;
     }
 }
