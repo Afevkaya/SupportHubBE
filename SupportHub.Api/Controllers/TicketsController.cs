@@ -20,5 +20,11 @@ namespace SupportHub.Api.Controllers
             var response = await ticketService.CreateTicketAsync(request);
             return Ok(response);
         }
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] RequestUpdateTicketStatus request)
+        {
+            var response = await ticketService.UpdateTicketStatusAsync(id, request);
+            return Ok(response);
+        }
     }
 }

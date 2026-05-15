@@ -7,4 +7,5 @@ public interface ITicketService
 {
     Task<List<ResponseGetTicket>> GetTicketsAsync();
     Task<ResponseCreateTicket> CreateTicketAsync(RequestCreateTicket request);
+    Task<ResponseUpdateTicketStatus> UpdateTicketStatusAsync(Guid id, RequestUpdateTicketStatus request);
 }
