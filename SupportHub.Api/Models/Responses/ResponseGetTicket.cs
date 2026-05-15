@@ -1,8 +1,5 @@
-﻿namespace SupportHub.Api.Models.Responses;
+﻿using SupportHub.Api.Enums;
 
-public record ResponseGetTicket(
-    Guid Id,
-    string Title,
-    string Status,
-    DateTime CreatedDate
-);
+namespace SupportHub.Api.Models.Responses;
+
+public record ResponseGetTicket(Guid Id, string Title, string Status, DateTime CreatedDate);

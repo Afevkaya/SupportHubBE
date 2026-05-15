@@ -1,4 +1,6 @@
-﻿namespace SupportHub.Api.Entities;
+﻿using SupportHub.Api.Enums;
+
+namespace SupportHub.Api.Entities;
 
 public class Ticket
 {
@@ -7,4 +9,5 @@ public class Ticket
     public string Description { get; set; }
     public string Status { get; set; }
     public DateTime CreatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; }
 }
