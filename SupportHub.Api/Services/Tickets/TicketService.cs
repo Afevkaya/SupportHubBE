@@ -13,7 +13,7 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
         var result = await ticketRepository.GetAllAsync();
         if(result.Count == 0)
             throw new ArgumentException("No tickets found.");
-        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status, x.CreatedDate)).ToList();
+        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();
         return response;
     }
     
@@ -22,7 +22,7 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
         var result = await ticketRepository.GetOpenTicketsAsync();
         if(result.Count == 0)
             return [];
-        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status, x.CreatedDate)).ToList();
+        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();
         return response;
     }
 
@@ -40,7 +40,7 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
             Id = Guid.NewGuid(),
             Title = request.Title,
             Description = request.Description,
-            Status = nameof(TicketStatusType.Open),
+            Status = TicketStatusType.Open,
             CreatedDate = DateTime.UtcNow
         };
         var result = await ticketRepository.CreateAsync(ticket);
@@ -48,7 +48,7 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
             result.Id,
             result.Title,
             result.Description,
-            result.Status,
+            result.Status.ToString(),
             result.CreatedDate
         );
         return response;
@@ -64,7 +64,7 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
             ticket.Id,
             ticket.Title,
             ticket.Description,
-            ticket.Status,
+            ticket.Status.ToString(),
             ticket.CreatedDate,
             ticket.UpdatedDate
         );
