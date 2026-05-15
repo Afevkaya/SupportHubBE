@@ -1,36 +1,43 @@
-﻿using SupportHub.Api.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using SupportHub.Api.Contexts;
+using SupportHub.Api.Entities;
 using SupportHub.Api.Enums;
 
 namespace SupportHub.Api.Repositories.Tickets;
 
-public class TicketRepository : ITicketRepository
+public class TicketRepository(SupportHubDbContext context) : ITicketRepository
 {
-    private static readonly List<Ticket> Tickets = [];
-
-    public Task<List<Ticket>> GetAllAsync()
+    private IQueryable<Ticket> AsQueryable()
     {
-        return Task.FromResult(Tickets.ToList());
+        return context.Tickets.AsQueryable().AsNoTracking();
+    }
+
+    public async Task<List<Ticket>> GetAllAsync()
+    {
+        return await AsQueryable().ToListAsync();
     }
     
-    public Task<List<Ticket>> GetOpenTicketsAsync()
+    public async Task<List<Ticket>> GetOpenTicketsAsync()
     {
-        var openTickets = Tickets.Where(t => t is { Status: nameof(TicketStatusType.Open) }).ToList();
-        return Task.FromResult(openTickets);
+        var openTickets = await AsQueryable().Where(t => t.Status == nameof(TicketStatusType.Open)).ToListAsync();
+        return openTickets;
     }
 
-    public Task<Ticket> CreateAsync(Ticket ticket)
+    public async Task<Ticket> CreateAsync(Ticket ticket)
     {
-        Tickets.Add(ticket);
-        return Task.FromResult(ticket);
+        var entity = await context.Tickets.AddAsync(ticket);
+        await context.SaveChangesAsync();
+        return entity.Entity;
     }
 
-    public Task<Ticket> UpdateStatusAsync(Guid id, TicketStatusType status)
+    public async Task<Ticket> UpdateStatusAsync(Guid id, TicketStatusType status)
     {
-        var ticket = Tickets.FirstOrDefault(t => t.Id == id);
+        var ticket = await context.Tickets.FirstOrDefaultAsync(t => t.Id == id);
         if (ticket == null) throw new KeyNotFoundException("Ticket not found.");
 
-        ticket.Status = nameof(status);
+        ticket.Status = status.ToString();
         ticket.UpdatedDate = DateTime.UtcNow;
-        return Task.FromResult(ticket);
+        await context.SaveChangesAsync();
+        return ticket;
     }
 }

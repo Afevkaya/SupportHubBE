@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using SupportHub.Api.Contexts;
 using SupportHub.Api.Repositories.Tickets;
 using SupportHub.Api.Services.Tickets;
 using SupportHub.Api.Middlewares;
@@ -10,6 +12,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<SupportHubDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSql")));
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 
