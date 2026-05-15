@@ -19,7 +19,7 @@ public class TicketRepository(SupportHubDbContext context) : ITicketRepository
     
     public async Task<List<Ticket>> GetOpenTicketsAsync()
     {
-        var openTickets = await AsQueryable().Where(t => t.Status == nameof(TicketStatusType.Open)).ToListAsync();
+        var openTickets = await AsQueryable().Where(t => t.Status == TicketStatusType.Open).ToListAsync();
         return openTickets;
     }
 
@@ -35,7 +35,7 @@ public class TicketRepository(SupportHubDbContext context) : ITicketRepository
         var ticket = await context.Tickets.FirstOrDefaultAsync(t => t.Id == id);
         if (ticket == null) throw new KeyNotFoundException("Ticket not found.");
 
-        ticket.Status = status.ToString();
+        ticket.Status = status;
         ticket.UpdatedDate = DateTime.UtcNow;
         await context.SaveChangesAsync();
         return ticket;
