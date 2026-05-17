@@ -10,13 +10,6 @@ public class CreateTicketCommandHandler(ITicketWriteRepository ticketWriteReposi
 {
     public async Task<ResponseCreateTicket> Handle(CreateTicketCommand request, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
-
-        if (string.IsNullOrEmpty(request.Title)) 
-            throw new ArgumentException("Title is required.");
-            
-        if(string.IsNullOrEmpty(request.Description)) 
-            throw new ArgumentException("Description is required.");
         var ticket = new Ticket
         {
             Id = Guid.NewGuid(),
