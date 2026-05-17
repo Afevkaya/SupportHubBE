@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.DTOs.Requests;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
+using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 
 namespace SupportHub.Api.Controllers
 {
     [Route("api/tickets")]
     [ApiController]
-    public class TicketsController(ITicketCommandService ticketCommandService, ITicketQueryService ticketQueryService,IMediator mediator) : ControllerBase
+    public class TicketsController(ITicketQueryService ticketQueryService,IMediator mediator) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> GetTickets()
@@ -33,9 +34,10 @@ namespace SupportHub.Api.Controllers
         }
         
         [HttpPatch("{id:guid}/status")]
-        public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] RequestUpdateTicketStatus request)
+        public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] UpdateTicketStatusCommand request)
         {
-            var response = await ticketCommandService.UpdateTicketStatusAsync(id, request);
+            var command = request with { Id = id };
+            var response = await mediator.Send(command);
             return Ok(response);
         }
     }
