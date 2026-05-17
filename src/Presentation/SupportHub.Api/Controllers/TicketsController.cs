@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.DTOs.Requests;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
+using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 
 namespace SupportHub.Api.Controllers
 {
@@ -20,7 +21,7 @@ namespace SupportHub.Api.Controllers
         [HttpGet("open")]
         public async Task<IActionResult> GetOpenTickets()
         {
-            var response = await ticketQueryService.GetOpenTicketsAsync();
+            var response = await mediator.Send(new GetOpenTicketsQuery());
             return Ok(response);
         }
         
