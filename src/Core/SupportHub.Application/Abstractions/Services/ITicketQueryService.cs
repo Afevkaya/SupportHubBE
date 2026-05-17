@@ -5,5 +5,4 @@ namespace SupportHub.Application.Abstractions.Services;
 public interface ITicketQueryService
 {
     Task<List<ResponseGetTicket>> GetTicketsAsync();
-    Task<List<ResponseGetTicket>> GetOpenTicketsAsync();
 }
