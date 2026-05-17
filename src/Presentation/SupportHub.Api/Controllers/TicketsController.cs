@@ -1,21 +1,20 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using SupportHub.Application.Abstractions.Services;
-using SupportHub.Application.DTOs.Requests;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
+using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 
 namespace SupportHub.Api.Controllers
 {
     [Route("api/tickets")]
     [ApiController]
-    public class TicketsController(ITicketQueryService ticketQueryService,IMediator mediator) : ControllerBase
+    public class TicketsController(IMediator mediator) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> GetTickets()
         {
-            var response = await ticketQueryService.GetTicketsAsync();
+            var response = await mediator.Send(new GetAllTicketsQuery());
             return Ok(response);
         }
         
