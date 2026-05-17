@@ -1,32 +1,14 @@
-﻿using SupportHub.Domain.Entities;
-using SupportHub.Domain.Enums;
-using SupportHub.Application.Abstractions.Repositories.Tickets;
+﻿using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.DTOs.Requests;
 using SupportHub.Application.DTOs.Responses;
+using SupportHub.Domain.Entities;
+using SupportHub.Domain.Enums;
 
 namespace SupportHub.Application.Services.Tickets;
 
-public class TicketService(ITicketRepository ticketRepository) : ITicketService
+public class TicketCommandService(ITicketRepository ticketRepository) : ITicketCommandService
 {
-    public async Task<List<ResponseGetTicket>> GetTicketsAsync()
-    {
-        var result = await ticketRepository.GetAllAsync();
-        if(result.Count == 0)
-            throw new ArgumentException("No tickets found.");
-        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();
-        return response;
-    }
-    
-    public async Task<List<ResponseGetTicket>> GetOpenTicketsAsync()
-    {
-        var result = await ticketRepository.GetOpenTicketsAsync();
-        if(result.Count == 0)
-            return [];
-        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();
-        return response;
-    }
-
     public async Task<ResponseCreateTicket> CreateTicketAsync(RequestCreateTicket request)
     {
         ArgumentNullException.ThrowIfNull(request);

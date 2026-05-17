@@ -16,7 +16,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<SupportHubDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSql")));
-builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<ITicketCommandService, TicketCommandService>();
+builder.Services.AddScoped<ITicketQueryService, TicketQueryService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 
 var app = builder.Build();
