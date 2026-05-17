@@ -4,6 +4,7 @@ using Persistence.Repositories.Tickets;
 using SupportHub.Api.Middlewares;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Abstractions.Services;
+using SupportHub.Application.Extensions;
 using SupportHub.Application.Services.Tickets;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<SupportHubDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSql")));
+builder.Services.AddApplicationServices();
 builder.Services.AddScoped<ITicketCommandService, TicketCommandService>();
 builder.Services.AddScoped<ITicketQueryService, TicketQueryService>();
 builder.Services.AddScoped<ITicketReadRepository, TicketReadRepository>();
