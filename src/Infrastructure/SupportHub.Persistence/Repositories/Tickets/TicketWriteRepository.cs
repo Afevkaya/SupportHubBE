@@ -6,24 +6,8 @@ using SupportHub.Domain.Enums;
 
 namespace Persistence.Repositories.Tickets;
 
-public class TicketRepository(SupportHubDbContext context) : ITicketRepository
+public class TicketWriteRepository(SupportHubDbContext context) : ITicketWriteRepository
 {
-    private IQueryable<Ticket> AsQueryable()
-    {
-        return context.Tickets.AsQueryable().AsNoTracking();
-    }
-
-    public async Task<List<Ticket>> GetAllAsync()
-    {
-        return await AsQueryable().ToListAsync();
-    }
-    
-    public async Task<List<Ticket>> GetOpenTicketsAsync()
-    {
-        var openTickets = await AsQueryable().Where(t => t.Status == TicketStatusType.Open).ToListAsync();
-        return openTickets;
-    }
-
     public async Task<Ticket> CreateAsync(Ticket ticket)
     {
         var entity = await context.Tickets.AddAsync(ticket);
