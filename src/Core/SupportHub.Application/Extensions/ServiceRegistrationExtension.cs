@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using SupportHub.Application.Abstractions.Services;
 
 namespace SupportHub.Application.Extensions;
 
