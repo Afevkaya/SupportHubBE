@@ -7,7 +7,7 @@ using SupportHub.Domain.Enums;
 
 namespace SupportHub.Application.Services.Tickets;
 
-public class TicketCommandService(ITicketRepository ticketRepository) : ITicketCommandService
+public class TicketCommandService(ITicketWriteRepository ticketWriteRepository) : ITicketCommandService
 {
     public async Task<ResponseCreateTicket> CreateTicketAsync(RequestCreateTicket request)
     {
@@ -26,7 +26,7 @@ public class TicketCommandService(ITicketRepository ticketRepository) : ITicketC
             Status = TicketStatusType.Open,
             CreatedDate = DateTime.UtcNow
         };
-        var result = await ticketRepository.CreateAsync(ticket);
+        var result = await ticketWriteRepository.CreateAsync(ticket);
         var response = new ResponseCreateTicket(
             result.Id,
             result.Title,
@@ -42,7 +42,7 @@ public class TicketCommandService(ITicketRepository ticketRepository) : ITicketC
         ArgumentNullException.ThrowIfNull(request);
         if(!Enum.IsDefined(request.Status))
             throw new ArgumentException("Invalid status value.");
-        var ticket = await ticketRepository.UpdateStatusAsync(id, request.Status);
+        var ticket = await ticketWriteRepository.UpdateStatusAsync(id, request.Status);
         var response = new ResponseUpdateTicketStatus(
             ticket.Id,
             ticket.Title,

@@ -4,11 +4,11 @@ using SupportHub.Application.DTOs.Responses;
 
 namespace SupportHub.Application.Services.Tickets;
 
-public class TicketQueryService(ITicketRepository ticketRepository) : ITicketQueryService
+public class TicketQueryService(ITicketReadRepository ticketReadRepository) : ITicketQueryService
 {
     public async Task<List<ResponseGetTicket>> GetTicketsAsync()
     {
-        var result = await ticketRepository.GetAllAsync();
+        var result = await ticketReadRepository.GetAllAsync();
         if(result.Count == 0)
             throw new ArgumentException("No tickets found.");
         var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();
@@ -17,7 +17,7 @@ public class TicketQueryService(ITicketRepository ticketRepository) : ITicketQue
     
     public async Task<List<ResponseGetTicket>> GetOpenTicketsAsync()
     {
-        var result = await ticketRepository.GetOpenTicketsAsync();
+        var result = await ticketReadRepository.GetOpenTicketsAsync();
         if(result.Count == 0)
             return [];
         var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();

@@ -18,8 +18,8 @@ builder.Services.AddDbContext<SupportHubDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSql")));
 builder.Services.AddScoped<ITicketCommandService, TicketCommandService>();
 builder.Services.AddScoped<ITicketQueryService, TicketQueryService>();
-builder.Services.AddScoped<ITicketRepository, TicketRepository>();
-
+builder.Services.AddScoped<ITicketReadRepository, TicketReadRepository>();
+builder.Services.AddScoped<ITicketWriteRepository, TicketWriteRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
