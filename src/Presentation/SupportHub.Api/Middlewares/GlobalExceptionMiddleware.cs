@@ -1,11 +1,16 @@
 ﻿using System.Net;
 using System.Text.Json;
-using SupportHub.Application.DTOs.Responses;
+using FluentValidation;
+using SupportHub.Api.Models.Responses;
 
 namespace SupportHub.Api.Middlewares;
 
 public class GlobalExceptionMiddleware(RequestDelegate next)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -15,6 +20,30 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
         catch (Exception e)
         {
             context.Response.ContentType = "application/json";
+            
+            // --- ValidationException için özel JSON ---
+            if (e is ValidationException vex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+
+                var errors = vex.Errors
+                    .Where(x => !string.IsNullOrWhiteSpace(x.PropertyName))
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(f => f.ErrorMessage ?? string.Empty).ToList()
+                    );
+
+                var errorResponse = new ValidationErrorResponse(
+                    context.Response.StatusCode,
+                    "Validation failed.",
+                    errors
+                );
+                
+                var payload = JsonSerializer.Serialize(errorResponse, JsonOptions);
+                await context.Response.WriteAsync(payload);
+                return;
+            }
 
             var statusCode = e switch
             {
@@ -42,9 +71,8 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
 
             context.Response.StatusCode = statusCode;
             var error = new ErrorResponse(statusCode, e.Message);
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var payload = JsonSerializer.Serialize(error, options);
-            await context.Response.WriteAsync(payload);
+            var payload2 = JsonSerializer.Serialize(error, JsonOptions);
+            await context.Response.WriteAsync(payload2);
         }
     }
 }
