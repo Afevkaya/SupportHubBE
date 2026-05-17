@@ -5,7 +5,7 @@ using SupportHub.Api.Models.Responses;
 
 namespace SupportHub.Api.Middlewares;
 
-public class GlobalExceptionMiddleware(RequestDelegate next)
+public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -21,7 +21,6 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
         {
             context.Response.ContentType = "application/json";
             
-            // --- ValidationException için özel JSON ---
             if (e is ValidationException vex)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -42,6 +41,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
                 
                 var payload = JsonSerializer.Serialize(errorResponse, JsonOptions);
                 await context.Response.WriteAsync(payload);
+                logger.LogError(vex, "Validation failed.");
                 return;
             }
 
@@ -52,7 +52,6 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
-            // If exception has a public int StatusCode property, prefer it.
             var statusProp = e.GetType().GetProperty("StatusCode");
             if (statusProp != null && statusProp.PropertyType == typeof(int))
             {
@@ -73,6 +72,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next)
             var error = new ErrorResponse(statusCode, e.Message);
             var payload2 = JsonSerializer.Serialize(error, JsonOptions);
             await context.Response.WriteAsync(payload2);
+            logger.LogError(e, "An unexpected error occurred.");
         }
     }
 }

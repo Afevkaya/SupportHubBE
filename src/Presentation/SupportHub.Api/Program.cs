@@ -1,37 +1,76 @@
-using Microsoft.EntityFrameworkCore;
-using Persistence.Contexts;
-using Persistence.Repositories.Tickets;
+using Persistence.Extensions;
+using Serilog;
+using Serilog.Events;
 using SupportHub.Api.Middlewares;
-using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Extensions;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<SupportHubDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSql")));
-builder.Services.AddApplicationServices();
-builder.Services.AddScoped<ITicketReadRepository, TicketReadRepository>();
-builder.Services.AddScoped<ITicketWriteRepository, TicketWriteRepository>();
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-// Global exception middleware should be early in the pipeline so it can catch exceptions
-app.UseMiddleware<GlobalExceptionMiddleware>();
-
-if (app.Environment.IsDevelopment())
+try
 {
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    Log.Information("Starting SupportHub API...");
+
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddControllers();
+    builder.Services.AddOpenApi();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddApplicationServices();
+    builder.Services.AddPersistenceServices(builder.Configuration);
+
+    builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
+    {
+        var env = hostingContext.HostingEnvironment;
+
+        loggerConfiguration
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Environment", env.EnvironmentName)
+            .Enrich.WithProperty("Application", "SupportHub.Api")
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                path: "logs/log-.txt",
+                rollingInterval: RollingInterval.Day,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+                retainedFileCountLimit: 30);
+
+        if (env.IsDevelopment())
+        {
+            loggerConfiguration.MinimumLevel.Debug();
+        }
+    });
+
+    var app = builder.Build();
+
+    Log.Information("Creating HTTP request pipeline...");
+
+    app.UseMiddleware<GlobalExceptionMiddleware>();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseAuthorization();
+    app.MapControllers();
+
+    Log.Information("SupportHub API started successfully.");
+    await app.RunAsync();
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.Information("SupportHub API shutting down...");
+    await Log.CloseAndFlushAsync();
+}
