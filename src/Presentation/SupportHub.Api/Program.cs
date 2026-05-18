@@ -1,3 +1,4 @@
+using Persistence.Contexts;
 using Persistence.Extensions;
 using Serilog;
 using Serilog.Events;
@@ -19,6 +20,10 @@ try
     builder.Services.AddSwaggerGen();
     builder.Services.AddApplicationServices();
     builder.Services.AddPersistenceServices(builder.Configuration);
+    builder.Services.AddHealthChecks()
+        .AddNpgSql(builder.Configuration.GetConnectionString("PostgresSql") ?? "", name: "PostgreSQL", tags: ["db", "sql", "postgres"
+        ]);
+    
 
     builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
     {
@@ -62,6 +67,7 @@ try
 
     app.UseHttpsRedirection();
     app.UseAuthorization();
+    app.MapHealthChecks("/health");
     app.MapControllers();
 
     Log.Information("SupportHub API started successfully.");
