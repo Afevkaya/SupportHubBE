@@ -32,11 +32,11 @@ try
             .Enrich.WithProperty("Environment", env.EnvironmentName)
             .Enrich.WithProperty("Application", "SupportHub.Api")
             .WriteTo.Console(
-                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [CorrelationId:{CorrelationId}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.File(
                 path: "logs/log-.txt",
                 rollingInterval: RollingInterval.Day,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [CorrelationId:{CorrelationId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
                 retainedFileCountLimit: 30);
 
         if (env.IsDevelopment())
@@ -49,6 +49,7 @@ try
 
     Log.Information("Creating HTTP request pipeline...");
 
+    app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
     if (app.Environment.IsDevelopment())
