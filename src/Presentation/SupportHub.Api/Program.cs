@@ -50,6 +50,7 @@ try
     Log.Information("Creating HTTP request pipeline...");
 
     app.UseMiddleware<CorrelationIdMiddleware>();
+    app.UseMiddleware<RequestLoggingMiddleware>();
     app.UseMiddleware<GlobalExceptionMiddleware>();
 
     if (app.Environment.IsDevelopment())
