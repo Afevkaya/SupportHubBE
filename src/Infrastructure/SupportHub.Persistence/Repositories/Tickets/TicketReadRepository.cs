@@ -1,26 +1,71 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Persistence.Contexts;
+﻿using Dapper;
+using Microsoft.Extensions.Configuration;
+using Npgsql;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
-using SupportHub.Domain.Entities;
+using SupportHub.Application.DTOs.Responses;
 using SupportHub.Domain.Enums;
 
 namespace Persistence.Repositories.Tickets;
 
-public class TicketReadRepository(SupportHubDbContext context) : ITicketReadRepository
+public class TicketReadRepository(IConfiguration configuration) : ITicketReadRepository
 {
-    private IQueryable<Ticket> AsQueryable()
+    public async Task<List<ResponseGetTicket>> GetAllAsync()
     {
-        return context.Tickets.AsQueryable().AsNoTracking();
+        var connectionString = configuration.GetConnectionString("PostgresSql")
+            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
+
+        await using var connection = new NpgsqlConnection(connectionString);
+
+        const string sql = """
+            SELECT "Id", "Title", "Status", "CreatedDate"
+            FROM "Tickets"
+            ORDER BY "CreatedDate" DESC
+            """;
+
+        var rows = await connection.QueryAsync<TicketRow>(sql);
+
+        return rows
+            .Select(x => new ResponseGetTicket(
+                x.Id,
+                x.Title,
+                x.Status,
+                x.CreatedDate))
+            .ToList();
     }
 
-    public async Task<List<Ticket>> GetAllAsync()
+    public async Task<List<ResponseGetTicket>> GetOpenTicketsAsync()
     {
-        return await AsQueryable().ToListAsync();
+        var connectionString = configuration.GetConnectionString("PostgresSql")
+            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
+
+        await using var connection = new NpgsqlConnection(connectionString);
+
+        const string sql = """
+            SELECT "Id", "Title", "Status", "CreatedDate"
+            FROM "Tickets"
+            WHERE "Status" = @Status
+            ORDER BY "CreatedDate" DESC
+            """;
+
+        var rows = await connection.QueryAsync<TicketRow>(sql, new
+        {
+            Status = TicketStatusType.Open.ToString()
+        });
+
+        return rows
+            .Select(x => new ResponseGetTicket(
+                x.Id,
+                x.Title,
+                x.Status,
+                x.CreatedDate))
+            .ToList();
     }
-    
-    public async Task<List<Ticket>> GetOpenTicketsAsync()
+
+    private sealed class TicketRow
     {
-        var openTickets = await AsQueryable().Where(t => t.Status == TicketStatusType.Open).ToListAsync();
-        return openTickets;
+        public Guid Id { get; init; }
+        public string Title { get; init; } = string.Empty;
+        public string Status { get; init; } = string.Empty;
+        public DateTime CreatedDate { get; init; }
     }
 }

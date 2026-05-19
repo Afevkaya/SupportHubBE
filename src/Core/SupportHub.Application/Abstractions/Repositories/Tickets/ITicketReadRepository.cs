@@ -1,9 +1,11 @@
-﻿using SupportHub.Domain.Entities;
+﻿using SupportHub.Application.DTOs.Responses;
+using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
+using SupportHub.Domain.Entities;
 
 namespace SupportHub.Application.Abstractions.Repositories.Tickets;
 
 public interface ITicketReadRepository
 {
-    Task<List<Ticket>> GetAllAsync();
-    Task<List<Ticket>> GetOpenTicketsAsync();
+    Task<List<ResponseGetTicket>> GetAllAsync();
+    Task<List<ResponseGetTicket>> GetOpenTicketsAsync();
 }

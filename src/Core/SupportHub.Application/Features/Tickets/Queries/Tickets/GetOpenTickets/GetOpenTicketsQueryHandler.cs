@@ -9,9 +9,6 @@ public class GetOpenTicketsQueryHandler(ITicketReadRepository ticketReadReposito
     public async Task<List<ResponseGetTicket>> Handle(GetOpenTicketsQuery request, CancellationToken cancellationToken)
     {
         var result = await ticketReadRepository.GetOpenTicketsAsync();
-        if(result.Count == 0)
-            return [];
-        var response = result.Select(x => new ResponseGetTicket(x.Id, x.Title,x.Status.ToString(), x.CreatedDate)).ToList();
-        return response;
+        return result.Count == 0 ? [] : result;
     }
 }

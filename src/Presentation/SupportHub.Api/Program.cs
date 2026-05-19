@@ -53,7 +53,7 @@ try
     var app = builder.Build();
 
     Log.Information("Creating HTTP request pipeline...");
-
+    Log.Information("Environment: {EnvironmentName}", app.Environment.EnvironmentName); 
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestLoggingMiddleware>();
     app.UseMiddleware<GlobalExceptionMiddleware>();
