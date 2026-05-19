@@ -8,4 +8,5 @@ public interface ITicketReadRepository
 {
     Task<List<ResponseGetTicket>> GetAllAsync();
     Task<List<ResponseGetTicket>> GetOpenTicketsAsync();
+    Task<Ticket?> GetTicketDetail(Guid id);
 }
