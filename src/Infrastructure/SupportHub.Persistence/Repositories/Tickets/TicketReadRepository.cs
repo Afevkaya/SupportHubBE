@@ -12,7 +12,7 @@ namespace Persistence.Repositories.Tickets;
 
 public class TicketReadRepository(IConfiguration configuration) : ITicketReadRepository
 {
-    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc")
+    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc", string? status = null, string search = "")
     {
         if (page <= 0) page = 1;
         if (pageSize <= 0) pageSize = 10;
@@ -22,16 +22,34 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         await using var connection = new NpgsqlConnection(connectionString);
 
+        // Parametreler ve WHERE clause oluştur
+        var parameters = new DynamicParameters();
+        var whereConditions = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            whereConditions.Add("\"Status\" = @Status");
+            parameters.Add("Status", status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            whereConditions.Add("(\"Title\" ILIKE @Search OR \"Description\" ILIKE @Search)");
+            parameters.Add("Search", $"%{search}%");
+        }
+
+        var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
         // Toplam kayıt sayısı
-        const string countSql = """
+        var countSql = $"""
             SELECT COUNT(1)
             FROM "Tickets"
+            {whereClause}
             """;
 
-        var totalCount = await connection.QuerySingleAsync<int>(countSql);
+        var totalCount = await connection.QuerySingleAsync<int>(countSql, parameters);
 
-        // Sayfalama parametreleri
-        var offset = (page - 1) * pageSize;
+        // Sort validation (SQL injection koruması)
         var sortColumn = sortBy?.ToLowerInvariant() switch
         {
             "title" => "\"Title\"",
@@ -39,21 +57,23 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             "createddate" => "\"CreatedDate\"",
             _ => "\"CreatedDate\""
         };
-        
+
         var direction = sortDirection?.ToLowerInvariant() == "asc" ? "ASC" : "DESC";
 
-        var sql = $"""
-           SELECT "Id", "Title", "Status", "CreatedDate"
-           FROM "Tickets"
-           ORDER BY {sortColumn} {direction}
-           LIMIT @PageSize OFFSET @Offset
-           """;
+        // Sayfalama parametreleri
+        var offset = (page - 1) * pageSize;
+        parameters.Add("PageSize", pageSize);
+        parameters.Add("Offset", offset);
 
-        var rows = await connection.QueryAsync<TicketRow>(sql, new
-        {
-            PageSize = pageSize,
-            Offset = offset
-        });
+        var sql = $"""
+            SELECT "Id", "Title", "Status", "CreatedDate"
+            FROM "Tickets"
+            {whereClause}
+            ORDER BY {sortColumn} {direction}
+            LIMIT @PageSize OFFSET @Offset
+            """;
+
+        var rows = await connection.QueryAsync<TicketRow>(sql, parameters);
 
         var items = rows
             .Select(x => new ResponseGetTicket(
@@ -65,7 +85,6 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        
         return new GetAllTicketsQueryResponse(
             items,
             page,
