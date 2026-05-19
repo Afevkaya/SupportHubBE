@@ -13,16 +13,16 @@ namespace SupportHub.Api.Controllers
     public class TicketsController(IMediator mediator) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> GetTickets()
+        public async Task<IActionResult> GetTickets([FromQuery] GetAllTicketsQuery request)
         {
-            var response = await mediator.Send(new GetAllTicketsQuery());
+            var response = await mediator.Send(request);
             return Ok(response);
         }
         
         [HttpGet("open")]
-        public async Task<IActionResult> GetOpenTickets()
+        public async Task<IActionResult> GetOpenTickets([FromQuery] GetOpenTicketsQuery request)
         {
-            var response = await mediator.Send(new GetOpenTicketsQuery());
+            var response = await mediator.Send(request);
             return Ok(response);
         }
         
