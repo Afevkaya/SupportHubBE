@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses;
+using SupportHub.Domain.Entities;
 using SupportHub.Domain.Enums;
 
 namespace Persistence.Repositories.Tickets;
@@ -59,6 +60,24 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
                 x.Status,
                 x.CreatedDate))
             .ToList();
+    }
+
+    public async Task<Ticket?> GetTicketDetail(Guid id)
+    {
+        var connectionString = configuration.GetConnectionString("PostgresSql")
+            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
+
+        await using var connection = new NpgsqlConnection(connectionString);
+
+        const string sql = """
+            SELECT "Id", "Title", "Description", "Status", "CreatedDate", "UpdatedDate"
+            FROM "Tickets"
+            WHERE "Id" = @Id
+            """;
+
+        var ticket = connection.QuerySingleOrDefault<Ticket>(sql, new { Id = id });
+
+        return ticket;
     }
 
     private sealed class TicketRow

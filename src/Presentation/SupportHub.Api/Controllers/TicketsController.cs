@@ -4,6 +4,7 @@ using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
+using SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketDetail;
 
 namespace SupportHub.Api.Controllers
 {
@@ -22,6 +23,13 @@ namespace SupportHub.Api.Controllers
         public async Task<IActionResult> GetOpenTickets()
         {
             var response = await mediator.Send(new GetOpenTicketsQuery());
+            return Ok(response);
+        }
+        
+        [HttpGet("{Id:guid}")]
+        public async Task<IActionResult> GetTicketDetail([FromRoute] GetTicketDetailQuery request)
+        {
+            var response = await mediator.Send(request);
             return Ok(response);
         }
         
