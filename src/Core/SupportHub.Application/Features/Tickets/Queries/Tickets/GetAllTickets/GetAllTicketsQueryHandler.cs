@@ -8,13 +8,15 @@ public class GetAllTicketsQueryHandler(ITicketReadRepository ticketReadRepositor
 {
     public async Task<GetAllTicketsQueryResponse> Handle(GetAllTicketsQuery request, CancellationToken cancellationToken)
     {
-        var response = await ticketReadRepository.GetAllAsync(request.Page, request.PageSize,request.SortBy, request.SortDirection);
+        var response = await ticketReadRepository.GetAllAsync(request.Page, request.PageSize,request.SortBy, request.SortDirection,request.Status,request.Search);
         logger.LogInformation(
-            "Tickets retrieved. Page: {Page}, PageSize: {PageSize}, SortBy: {SortBy}, SortDirection: {SortDirection}, TotalCount: {TotalCount}, ReturnedItemCount: {ReturnedItemCount}",
+            "Tickets retrieved. Page: {Page}, PageSize: {PageSize}, SortBy: {SortBy}, SortDirection: {SortDirection}, Status: {Status}, Search: {Search}, TotalCount: {TotalCount}, ReturnedItemCount: {ReturnedItemCount}",
             request.Page,
             request.PageSize,
             request.SortBy,
             request.SortDirection,
+            request.Status,
+            request.Search,
             response.TotalCount,
             response.Items.Count);
         return response;
