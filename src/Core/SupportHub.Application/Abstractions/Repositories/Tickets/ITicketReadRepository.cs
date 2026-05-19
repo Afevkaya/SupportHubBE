@@ -1,5 +1,4 @@
-﻿using SupportHub.Application.DTOs.Responses;
-using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
+﻿using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 using SupportHub.Domain.Entities;
 
@@ -7,8 +6,9 @@ namespace SupportHub.Application.Abstractions.Repositories.Tickets;
 
 public interface ITicketReadRepository
 {
-    Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize);
+    Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc");
     Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize,
+        string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default);
     Task<Ticket?> GetTicketDetail(Guid id);
 }

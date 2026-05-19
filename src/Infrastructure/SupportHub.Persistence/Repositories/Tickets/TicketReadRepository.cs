@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Npgsql;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses;
@@ -13,7 +12,7 @@ namespace Persistence.Repositories.Tickets;
 
 public class TicketReadRepository(IConfiguration configuration) : ITicketReadRepository
 {
-    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize)
+    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc")
     {
         if (page <= 0) page = 1;
         if (pageSize <= 0) pageSize = 10;
@@ -33,13 +32,22 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         // Sayfalama parametreleri
         var offset = (page - 1) * pageSize;
+        var sortColumn = sortBy?.ToLowerInvariant() switch
+        {
+            "title" => "\"Title\"",
+            "status" => "\"Status\"",
+            "createddate" => "\"CreatedDate\"",
+            _ => "\"CreatedDate\""
+        };
+        
+        var direction = sortDirection?.ToLowerInvariant() == "asc" ? "ASC" : "DESC";
 
-        const string sql = """
-            SELECT "Id", "Title", "Status", "CreatedDate"
-            FROM "Tickets"
-            ORDER BY "CreatedDate" DESC
-            LIMIT @PageSize OFFSET @Offset
-            """;
+        var sql = $"""
+           SELECT "Id", "Title", "Status", "CreatedDate"
+           FROM "Tickets"
+           ORDER BY {sortColumn} {direction}
+           LIMIT @PageSize OFFSET @Offset
+           """;
 
         var rows = await connection.QueryAsync<TicketRow>(sql, new
         {
@@ -66,7 +74,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             totalPages);
     }
 
-    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize,
+    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default)
     {
         if (page <= 0) page = 1;
@@ -89,11 +97,20 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         // Sayfalama parametreleri
         var offset = (page - 1) * pageSize;
         
-        const string sql = """
+        var sortColumn = sortBy?.ToLowerInvariant() switch
+        {
+            "title" => "\"Title\"",
+            "status" => "\"Status\"",
+            "createddate" => "\"CreatedDate\"",
+            _ => "\"CreatedDate\""
+        };
+        var direction = sortDirection?.ToLowerInvariant() == "asc" ? "ASC" : "DESC";
+        
+        var sql = $"""
             SELECT "Id", "Title", "Status", "CreatedDate"
             FROM "Tickets"
             WHERE "Status" = @Status
-            ORDER BY "CreatedDate" DESC
+            ORDER BY {sortColumn} {direction}
             LIMIT @PageSize OFFSET @Offset
             """;
 

@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
-using SupportHub.Application.DTOs.Responses;
 
 namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 
@@ -9,12 +8,15 @@ public class GetOpenTicketsQueryHandler(ITicketReadRepository ticketReadReposito
 {
     public async Task<GetOpenTicketsQueryResponse> Handle(GetOpenTicketsQuery request, CancellationToken cancellationToken)
     {
-        var result = await ticketReadRepository.GetOpenTicketsAsync(request.Page, request.PageSize, cancellationToken);
+        var response = await ticketReadRepository.GetOpenTicketsAsync(request.Page, request.PageSize, cancellationToken: cancellationToken);
         logger.LogInformation(
-            "Open tickets retrieved with pagination. Page: {Page}, PageSize: {PageSize}, TotalCount: {TotalCount}",
+            "Open tickets retrieved with pagination. Page: {Page}, PageSize: {PageSize}, SortBy: {SortBy}, SortDirection: {SortDirection}, TotalCount: {TotalCount}, ReturnedItemCount: {ReturnedItemCount}",
             request.Page,
             request.PageSize,
-            result.TotalCount);
-        return result.Items.Count == 0 ? new GetOpenTicketsQueryResponse([], request.Page, request.PageSize, 0, 0) : result;
+            request.SortBy,
+            request.SortDirection,
+            response.TotalCount,
+            response.Items.Count);
+        return response;
     }
 }
