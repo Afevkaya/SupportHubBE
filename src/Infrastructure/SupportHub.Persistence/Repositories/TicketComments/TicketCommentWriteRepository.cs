@@ -9,7 +9,6 @@ public class TicketCommentWriteRepository(SupportHubDbContext context) : ITicket
     public async Task<TicketComment> CreateAsync(TicketComment ticketComment)
     {
         var entityEntry = await context.TicketComments.AddAsync(ticketComment);
-        await context.SaveChangesAsync();
         return entityEntry.Entity;
     }
 }
