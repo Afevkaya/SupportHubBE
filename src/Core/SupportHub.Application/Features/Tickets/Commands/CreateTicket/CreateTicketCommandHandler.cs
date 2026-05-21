@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses;
 using SupportHub.Domain.Entities;
@@ -7,7 +8,10 @@ using SupportHub.Domain.Enums;
 
 namespace SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 
-public class CreateTicketCommandHandler(ITicketWriteRepository ticketWriteRepository, ILogger<CreateTicketCommandHandler> logger) 
+public class CreateTicketCommandHandler(
+    ITicketWriteRepository ticketWriteRepository, 
+    ITicketActivityWriteRepository ticketActivityWriteRepository,
+    ILogger<CreateTicketCommandHandler> logger) 
     : IRequestHandler<CreateTicketCommand, ResponseCreateTicket>
 {
     public async Task<ResponseCreateTicket> Handle(CreateTicketCommand request, CancellationToken cancellationToken)
@@ -30,6 +34,14 @@ public class CreateTicketCommandHandler(ITicketWriteRepository ticketWriteReposi
             result.Priority.ToString(),
             result.CreatedDate
         );
+        await ticketActivityWriteRepository.CreateAsync(new TicketActivity
+        {
+            Id = Guid.NewGuid(),
+            TicketId = result.Id,
+            ActivityType = TicketActivityType.Created,
+            Description = $"Ticket created with status {result.Status} and priority {result.Priority}",
+            CreatedDate = DateTime.UtcNow
+        });
         logger.LogInformation("Ticket created with Id: {Id}, Status: {Status}, Priority: {Priority}", result.Id, result.Status, result.Priority);
         return response;
     }

@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence.Contexts;
+using Persistence.Repositories.TicketActivities;
 using Persistence.Repositories.TicketComments;
 using Persistence.Repositories.Tickets;
+using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.TicketComments;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 
@@ -18,5 +20,6 @@ public static class ServiceRegistrationExtension
         services.AddScoped<ITicketReadRepository, TicketReadRepository>();
         services.AddScoped<ITicketWriteRepository, TicketWriteRepository>();
         services.AddScoped<ITicketCommentWriteRepository, TicketCommentWriteRepository>();
+        services.AddScoped<ITicketActivityWriteRepository, TicketActivityWriteRepository>();
     }
 }

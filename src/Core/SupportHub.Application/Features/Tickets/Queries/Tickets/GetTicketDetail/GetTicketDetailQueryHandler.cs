@@ -19,7 +19,8 @@ public class GetTicketDetailQueryHandler(ITicketReadRepository ticketReadReposit
                 ticket.Priority.ToString(),
                 ticket.CreatedDate,
                 ticket.UpdatedDate,
-                ticket.TicketComments.Select(c => new ResponseTicketComment(c.AuthorName, c.Message)).ToList()
+                ticket.TicketComments.Select(c => new ResponseTicketComment(c.AuthorName, c.Message)).ToList(),
+                ticket.TicketActivities.Select(a => new ResponseTicketActivity(a.ActivityType.ToString(), a.Description, a.CreatedDate)).ToList()
             );
         logger.LogWarning("Ticket with id {Id} not found", request.Id);
         throw new KeyNotFoundException("Ticket not found");
