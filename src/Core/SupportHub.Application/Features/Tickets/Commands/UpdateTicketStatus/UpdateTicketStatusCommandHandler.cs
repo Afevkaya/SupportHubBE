@@ -1,10 +1,15 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses;
 
 namespace SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 
-public class UpdateTicketStatusCommandHandler(ITicketWriteRepository ticketWriteRepository) : IRequestHandler<UpdateTicketStatusCommand, ResponseUpdateTicketStatus>
+public class UpdateTicketStatusCommandHandler(
+    ITicketWriteRepository ticketWriteRepository,
+    ITicketActivityWriteRepository ticketActivityWriteRepository,
+    ILogger<UpdateTicketStatusCommandHandler> logger) : IRequestHandler<UpdateTicketStatusCommand, ResponseUpdateTicketStatus>
 {
     public async Task<ResponseUpdateTicketStatus> Handle(UpdateTicketStatusCommand request, CancellationToken cancellationToken)
     {
@@ -20,6 +25,15 @@ public class UpdateTicketStatusCommandHandler(ITicketWriteRepository ticketWrite
             ticket.CreatedDate,
             ticket.UpdatedDate
         );
+        await ticketActivityWriteRepository.CreateAsync(new Domain.Entities.TicketActivity
+        {
+            Id = Guid.NewGuid(),
+            TicketId = ticket.Id,
+            ActivityType = Domain.Enums.TicketActivityType.StatusChanged,
+            Description = $"Ticket status changed to {ticket.Status}",
+            CreatedDate = DateTime.UtcNow
+        });
+        logger.LogInformation("Updated status for ticket {TicketId} to {Status}", ticket.Id, ticket.Status);
         return response;
     }
 }

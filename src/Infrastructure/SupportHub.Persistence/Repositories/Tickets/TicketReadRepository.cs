@@ -206,36 +206,43 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         const string sql = """
             SELECT
                 t."Id", t."Title", t."Description", t."Status", t."Priority", t."CreatedDate", t."UpdatedDate",
-                c."Id", c."Message", c."AuthorName", c."TicketId", c."CreatedDate"
+                c."Id", c."Message", c."AuthorName", c."TicketId", c."CreatedDate",
+                a."Id", a."ActivityType", a."Description", a."TicketId", a."CreatedDate"
             FROM "Tickets" t
             LEFT JOIN "TicketComments" c ON c."TicketId" = t."Id"
+            LEFT JOIN "TicketActivities" a ON a."TicketId" = t."Id"
             WHERE t."Id" = @Id
-            ORDER BY c."CreatedDate" ASC
+            ORDER BY c."CreatedDate" ASC, a."CreatedDate" ASC
             """;
 
         var ticketLookup = new Dictionary<Guid, Ticket>();
 
-        await connection.QueryAsync<Ticket, TicketComment, Ticket>(
+        await connection.QueryAsync<Ticket, TicketComment, TicketActivity, Ticket>(
             sql,
-            (ticket, comment) =>
+            (ticket, comment, activity) =>
             {
                 if (!ticketLookup.TryGetValue(ticket.Id, out var ticketEntry))
                 {
                     ticketEntry = ticket;
                     ticketEntry.TicketComments = new List<TicketComment>();
+                    ticketEntry.TicketActivities = new List<TicketActivity>();
                     ticketLookup.Add(ticketEntry.Id, ticketEntry);
                 }
 
-                // LEFT JOIN'de yorum yoksa comment default gelebilir; boş Id eklenmez.
-                if (comment is not null && comment.Id != Guid.Empty)
+                if (comment.Id != Guid.Empty && ticketEntry.TicketComments.All(c => c.Id != comment.Id))
                 {
                     ticketEntry.TicketComments.Add(comment);
+                }
+
+                if (activity.Id != Guid.Empty && ticketEntry.TicketActivities.All(a => a.Id != activity.Id))
+                {
+                    ticketEntry.TicketActivities.Add(activity);
                 }
 
                 return ticketEntry;
             },
             new { Id = id },
-            splitOn: "Id");
+            splitOn: "Id,Id");
 
         return ticketLookup.Values.FirstOrDefault();
     }
