@@ -12,7 +12,8 @@ namespace Persistence.Repositories.Tickets;
 
 public class TicketReadRepository(IConfiguration configuration) : ITicketReadRepository
 {
-    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc", string? status = null, string search = "")
+    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate",
+        string sortDirection = "desc", string? status = null, string? priority = null, string search = "")
     {
         if (page <= 0) page = 1;
         if (pageSize <= 0) pageSize = 10;
@@ -26,10 +27,40 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         var parameters = new DynamicParameters();
         var whereConditions = new List<string>();
 
+        // Status: int değerini enum'a çevir, sonra string'e dönüştür
         if (!string.IsNullOrWhiteSpace(status))
         {
-            whereConditions.Add("\"Status\" = @Status");
-            parameters.Add("Status", status);
+            if (int.TryParse(status, out var statusValue))
+            {
+                try
+                {
+                    var statusEnum = (TicketStatusType)statusValue;
+                    whereConditions.Add("\"Status\" = @Status");
+                    parameters.Add("Status", statusEnum.ToString());
+                }
+                catch
+                {
+                    // Geçersiz enum değeri, filtre uygulanmaz
+                }
+            }
+        }
+        
+        // Priority: int değerini enum'a çevir, sonra string'e dönüştür
+        if (!string.IsNullOrWhiteSpace(priority))
+        {
+            if (int.TryParse(priority, out var priorityValue))
+            {
+                try
+                {
+                    var priorityEnum = (TicketPriorityType)priorityValue;
+                    whereConditions.Add("\"Priority\" = @Priority");
+                    parameters.Add("Priority", priorityEnum.ToString());
+                }
+                catch
+                {
+                    // Geçersiz enum değeri, filtre uygulanmaz
+                }
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -55,6 +86,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             "title" => "\"Title\"",
             "status" => "\"Status\"",
             "createddate" => "\"CreatedDate\"",
+            "priority" => "\"Priority\"",
             _ => "\"CreatedDate\""
         };
 
@@ -66,7 +98,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         parameters.Add("Offset", offset);
 
         var sql = $"""
-            SELECT "Id", "Title", "Status", "CreatedDate"
+            SELECT "Id", "Title", "Status", "Priority", "CreatedDate"
             FROM "Tickets"
             {whereClause}
             ORDER BY {sortColumn} {direction}
@@ -80,6 +112,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
                 x.Id,
                 x.Title,
                 x.Status,
+                x.Priority,
                 x.CreatedDate))
             .ToList();
 
@@ -126,7 +159,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         var direction = sortDirection?.ToLowerInvariant() == "asc" ? "ASC" : "DESC";
         
         var sql = $"""
-            SELECT "Id", "Title", "Status", "CreatedDate"
+            SELECT "Id", "Title", "Status", "Priority", "CreatedDate"
             FROM "Tickets"
             WHERE "Status" = @Status
             ORDER BY {sortColumn} {direction}
@@ -145,6 +178,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
                 x.Id,
                 x.Title,
                 x.Status,
+                x.Priority,
                 x.CreatedDate))
             .ToList();
         
@@ -180,6 +214,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         public Guid Id { get; init; }
         public string Title { get; init; } = string.Empty;
         public string Status { get; init; } = string.Empty;
+        public string Priority { get; init; } = string.Empty;
         public DateTime CreatedDate { get; init; }
     }
 }

@@ -9,4 +9,5 @@ public class Ticket : BaseEntity
     public string Description { get; set; }
     public TicketStatusType Status { get; set; }
     public DateTime? UpdatedDate { get; set; }
+    public TicketPriorityType Priority { get; set; } = TicketPriorityType.Medium;
 }
