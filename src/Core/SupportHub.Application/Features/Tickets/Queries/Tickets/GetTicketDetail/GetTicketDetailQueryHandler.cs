@@ -15,6 +15,7 @@ public class GetTicketDetailQueryHandler(ITicketReadRepository ticketReadReposit
                 ticket.Title,
                 ticket.Description,
                 ticket.Status.ToString(),
+                ticket.Priority.ToString(),
                 ticket.CreatedDate,
                 ticket.UpdatedDate
             );

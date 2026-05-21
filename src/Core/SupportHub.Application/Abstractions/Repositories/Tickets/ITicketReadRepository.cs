@@ -7,7 +7,7 @@ namespace SupportHub.Application.Abstractions.Repositories.Tickets;
 public interface ITicketReadRepository
 {
     Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate",
-        string sortDirection = "desc", string? status = null, string search = "");
+        string sortDirection = "desc", string? status = null, string priority = "", string search = "");
     Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize,
         string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default);
