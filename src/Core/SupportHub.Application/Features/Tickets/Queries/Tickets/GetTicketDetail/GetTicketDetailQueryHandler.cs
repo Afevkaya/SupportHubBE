@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
+using SupportHub.Application.DTOs.Responses;
 
 namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketDetail;
 
@@ -17,7 +18,8 @@ public class GetTicketDetailQueryHandler(ITicketReadRepository ticketReadReposit
                 ticket.Status.ToString(),
                 ticket.Priority.ToString(),
                 ticket.CreatedDate,
-                ticket.UpdatedDate
+                ticket.UpdatedDate,
+                ticket.TicketComments.Select(c => new ResponseTicketComment(c.AuthorName, c.Message)).ToList()
             );
         logger.LogWarning("Ticket with id {Id} not found", request.Id);
         throw new KeyNotFoundException("Ticket not found");

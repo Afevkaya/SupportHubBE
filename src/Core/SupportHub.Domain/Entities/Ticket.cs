@@ -10,4 +10,5 @@ public class Ticket : BaseEntity
     public TicketStatusType Status { get; set; }
     public DateTime? UpdatedDate { get; set; }
     public TicketPriorityType Priority { get; set; } = TicketPriorityType.Medium;
+    public ICollection<TicketComment> TicketComments { get; set; } = new List<TicketComment>();
 }

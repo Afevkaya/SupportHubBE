@@ -79,6 +79,12 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             """;
 
         var totalCount = await connection.QuerySingleAsync<int>(countSql, parameters);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        if (totalPages > 0 && page > totalPages)
+        {
+            page = totalPages;
+        }
 
         // Sort validation (SQL injection koruması)
         var sortColumn = sortBy?.ToLowerInvariant() switch
@@ -116,7 +122,6 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
                 x.CreatedDate))
             .ToList();
 
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
         return new GetAllTicketsQueryResponse(
             items,
@@ -199,14 +204,58 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         await using var connection = new NpgsqlConnection(connectionString);
 
         const string sql = """
-            SELECT "Id", "Title", "Description", "Status", "CreatedDate", "UpdatedDate"
-            FROM "Tickets"
-            WHERE "Id" = @Id
+            SELECT
+                t."Id", t."Title", t."Description", t."Status", t."Priority", t."CreatedDate", t."UpdatedDate",
+                c."Id", c."Message", c."AuthorName", c."TicketId", c."CreatedDate"
+            FROM "Tickets" t
+            LEFT JOIN "TicketComments" c ON c."TicketId" = t."Id"
+            WHERE t."Id" = @Id
+            ORDER BY c."CreatedDate" ASC
             """;
 
-        var ticket = connection.QuerySingleOrDefault<Ticket>(sql, new { Id = id });
+        var ticketLookup = new Dictionary<Guid, Ticket>();
 
-        return ticket;
+        await connection.QueryAsync<Ticket, TicketComment, Ticket>(
+            sql,
+            (ticket, comment) =>
+            {
+                if (!ticketLookup.TryGetValue(ticket.Id, out var ticketEntry))
+                {
+                    ticketEntry = ticket;
+                    ticketEntry.TicketComments = new List<TicketComment>();
+                    ticketLookup.Add(ticketEntry.Id, ticketEntry);
+                }
+
+                // LEFT JOIN'de yorum yoksa comment default gelebilir; boş Id eklenmez.
+                if (comment is not null && comment.Id != Guid.Empty)
+                {
+                    ticketEntry.TicketComments.Add(comment);
+                }
+
+                return ticketEntry;
+            },
+            new { Id = id },
+            splitOn: "Id");
+
+        return ticketLookup.Values.FirstOrDefault();
+    }
+
+    public async Task<bool> GetByIdAsync(Guid id)
+    {
+        var connectionString = configuration.GetConnectionString("PostgresSql")
+            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
+
+        await using var connection = new NpgsqlConnection(connectionString);
+
+        const string sql = """
+            SELECT EXISTS(
+                SELECT 1
+                FROM "Tickets"
+                WHERE "Id" = @Id
+            )
+            """;
+
+        return await connection.QuerySingleAsync<bool>(sql, new { Id = id });
     }
 
     private sealed class TicketRow

@@ -12,4 +12,5 @@ public interface ITicketReadRepository
         string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default);
     Task<Ticket?> GetTicketDetail(Guid id);
+    Task<bool> GetByIdAsync(Guid id);
 }

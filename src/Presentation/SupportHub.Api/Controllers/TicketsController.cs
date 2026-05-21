@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
+using SupportHub.Application.Features.Tickets.Commands.CreateTicketComment;
 using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
@@ -41,9 +42,17 @@ namespace SupportHub.Api.Controllers
         }
         
         [HttpPatch("{id:guid}/status")]
-        public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] UpdateTicketStatusCommand request)
+        public async Task<IActionResult> UpdateTicketStatus([FromBody] UpdateTicketStatusCommand request, Guid id)
         {
             var command = request with { Id = id };
+            var response = await mediator.Send(command);
+            return Ok(response);
+        }
+        
+        [HttpPost("{ticketId:guid}/comments")]
+        public async Task<IActionResult> GetTicketDetail([FromBody] CreateTicketCommentCommand request, [FromRoute] Guid ticketId)
+        {
+            var command = request with { TicketId = ticketId };
             var response = await mediator.Send(command);
             return Ok(response);
         }
