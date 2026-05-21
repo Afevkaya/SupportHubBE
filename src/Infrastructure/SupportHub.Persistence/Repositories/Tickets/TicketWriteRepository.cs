@@ -11,7 +11,6 @@ public class TicketWriteRepository(SupportHubDbContext context) : ITicketWriteRe
     public async Task<Ticket> CreateAsync(Ticket ticket)
     {
         var entity = await context.Tickets.AddAsync(ticket);
-        await context.SaveChangesAsync();
         return entity.Entity;
     }
 
@@ -22,7 +21,6 @@ public class TicketWriteRepository(SupportHubDbContext context) : ITicketWriteRe
 
         ticket.Status = status;
         ticket.UpdatedDate = DateTime.UtcNow;
-        await context.SaveChangesAsync();
         return ticket;
     }
 }

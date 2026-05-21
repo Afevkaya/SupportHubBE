@@ -5,9 +5,11 @@ using Persistence.Contexts;
 using Persistence.Repositories.TicketActivities;
 using Persistence.Repositories.TicketComments;
 using Persistence.Repositories.Tickets;
+using Persistence.UnitOfWorks;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.TicketComments;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
+using SupportHub.Application.Abstractions.Transactions;
 
 namespace Persistence.Extensions;
 
@@ -21,5 +23,6 @@ public static class ServiceRegistrationExtension
         services.AddScoped<ITicketWriteRepository, TicketWriteRepository>();
         services.AddScoped<ITicketCommentWriteRepository, TicketCommentWriteRepository>();
         services.AddScoped<ITicketActivityWriteRepository, TicketActivityWriteRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
 }

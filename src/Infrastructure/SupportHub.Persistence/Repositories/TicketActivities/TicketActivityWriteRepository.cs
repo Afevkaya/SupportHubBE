@@ -10,6 +10,6 @@ public class TicketActivityWriteRepository(SupportHubDbContext context) : ITicke
     public Task CreateAsync(TicketActivity entity)
     {
         context.TicketActivities.Add(entity);
-        return context.SaveChangesAsync();
+        return Task.CompletedTask;
     }
 }
