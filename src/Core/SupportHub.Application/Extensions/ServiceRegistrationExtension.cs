@@ -13,5 +13,6 @@ public static class ServiceRegistrationExtension
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Behaviors.ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Behaviors.TransactionBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Behaviors.QueryPerformanceBehavior<,>));       
     }
 }
