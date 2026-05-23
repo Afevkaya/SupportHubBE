@@ -21,7 +21,10 @@ public static class ServiceRegistrationExtension
     {
         services.AddDbContext<SupportHubDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("PostgresSql")));
-        services.AddIdentityCore<AppUser>()
+        services.AddIdentityCore<AppUser>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+            })
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<SupportHubDbContext>();
         services.AddScoped<ITicketReadRepository, TicketReadRepository>();
