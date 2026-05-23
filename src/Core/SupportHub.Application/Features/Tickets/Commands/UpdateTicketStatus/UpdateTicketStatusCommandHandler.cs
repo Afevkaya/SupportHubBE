@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses;
@@ -9,6 +10,7 @@ namespace SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 public class UpdateTicketStatusCommandHandler(
     ITicketWriteRepository ticketWriteRepository,
     ITicketActivityWriteRepository ticketActivityWriteRepository,
+    ICacheService cacheService,
     ILogger<UpdateTicketStatusCommandHandler> logger) : IRequestHandler<UpdateTicketStatusCommand, ResponseUpdateTicketStatus>
 {
     public async Task<ResponseUpdateTicketStatus> Handle(UpdateTicketStatusCommand request, CancellationToken cancellationToken)
@@ -37,6 +39,8 @@ public class UpdateTicketStatusCommandHandler(
             ticket.UpdatedDate
         );
 
+        await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
+        
         logger.LogInformation("Updated status for ticket {TicketId} to {Status}", ticket.Id, ticket.Status);
         return response;
     }
