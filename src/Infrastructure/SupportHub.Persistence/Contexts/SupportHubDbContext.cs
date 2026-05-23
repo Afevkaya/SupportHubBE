@@ -1,13 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupportHub.Domain.Entities;
+using SupportHub.Domain.Entities.Identity;
 
 namespace Persistence.Contexts;
 
-public class SupportHubDbContext(DbContextOptions<SupportHubDbContext> options) : DbContext(options)
+public class SupportHubDbContext(DbContextOptions<SupportHubDbContext> options) : IdentityDbContext<AppUser,IdentityRole<Guid>,Guid>(options)
 {
     public DbSet<Ticket> Tickets { get; set; }
     public DbSet<TicketComment> TicketComments { get; set; }
     public DbSet<TicketActivity> TicketActivities { get; set; }
+    public DbSet<AppUser> AppUsers { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Ticket>().Property(t => t.Status).HasConversion<string>();
