@@ -26,6 +26,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Core\SupportHub.Application\SupportHub.Application.csproj" />
+      <ProjectReference Include="..\..\Infrastructure\SupportHub.Infrastructure\SupportHub.Infrastructure.csproj" />
       <ProjectReference Include="..\..\Infrastructure\SupportHub.Persistence\SupportHub.Persistence.csproj" />
     </ItemGroup>
 

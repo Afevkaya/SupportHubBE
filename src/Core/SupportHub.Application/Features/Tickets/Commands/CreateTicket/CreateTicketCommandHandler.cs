@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Abstractions.Transactions;
@@ -12,6 +13,7 @@ namespace SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 public class CreateTicketCommandHandler(
     ITicketWriteRepository ticketWriteRepository, 
     ITicketActivityWriteRepository ticketActivityWriteRepository,
+    ICacheService cacheService,
     ILogger<CreateTicketCommandHandler> logger) 
     : IRequestHandler<CreateTicketCommand, ResponseCreateTicket>
 {
@@ -47,7 +49,7 @@ public class CreateTicketCommandHandler(
             result.Priority.ToString(),
             result.CreatedDate
         );
-
+        await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
         logger.LogInformation("Ticket created with Id: {Id}, Status: {Status}, Priority: {Priority}", result.Id, result.Status, result.Priority);
         return response;
     

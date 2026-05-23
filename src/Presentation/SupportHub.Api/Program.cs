@@ -4,6 +4,7 @@ using Serilog;
 using Serilog.Events;
 using SupportHub.Api.Middlewares;
 using SupportHub.Application.Extensions;
+using SupportHub.Infrastructure.Extensions;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -20,6 +21,7 @@ try
     builder.Services.AddSwaggerGen();
     builder.Services.AddApplicationServices();
     builder.Services.AddPersistenceServices(builder.Configuration);
+    builder.Services.AddInfrastructureServices();
     builder.Services.AddMemoryCache();
     builder.Services.AddHealthChecks()
         .AddNpgSql(builder.Configuration.GetConnectionString("PostgresSql") ?? "", name: "PostgreSQL", tags: ["db", "sql", "postgres"

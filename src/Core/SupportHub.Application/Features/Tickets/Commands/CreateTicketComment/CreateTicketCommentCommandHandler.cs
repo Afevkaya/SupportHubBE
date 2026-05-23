@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.TicketComments;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
@@ -11,6 +12,7 @@ public class CreateTicketCommentCommandHandler(
     ITicketReadRepository ticketReadRepository,
     ITicketCommentWriteRepository ticketCommentWriteRepository,
     ITicketActivityWriteRepository ticketActivityWriteRepository,
+    ICacheService cacheService,
     ILogger<CreateTicketCommentCommandHandler> logger) : IRequestHandler<CreateTicketCommentCommand, CreateTicketCommentCommandResponse>
 {    
 
@@ -38,6 +40,8 @@ public class CreateTicketCommentCommandHandler(
             Description = $"Comment added by {request.AuthorName}",
             CreatedDate = DateTime.UtcNow
         });
+        
+        await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
         
         logger.LogInformation("Created comment for ticket {TicketId} by {AuthorName}", request.TicketId, request.AuthorName);
         return new CreateTicketCommentCommandResponse(response.Id, response.TicketId, response.AuthorName,
