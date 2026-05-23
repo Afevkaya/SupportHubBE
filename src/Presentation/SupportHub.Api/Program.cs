@@ -20,6 +20,7 @@ try
     builder.Services.AddSwaggerGen();
     builder.Services.AddApplicationServices();
     builder.Services.AddPersistenceServices(builder.Configuration);
+    builder.Services.AddMemoryCache();
     builder.Services.AddHealthChecks()
         .AddNpgSql(builder.Configuration.GetConnectionString("PostgresSql") ?? "", name: "PostgreSQL", tags: ["db", "sql", "postgres"
         ]);
