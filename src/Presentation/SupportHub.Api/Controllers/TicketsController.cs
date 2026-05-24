@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicketComment;
@@ -14,6 +15,7 @@ namespace SupportHub.Api.Controllers
     public class TicketsController(IMediator mediator) : ControllerBase
     {
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetTickets([FromQuery] GetAllTicketsQuery request)
         {
             var response = await mediator.Send(request);
