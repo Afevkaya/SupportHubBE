@@ -21,7 +21,11 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
             .MaximumLength(100).WithMessage("E-posta adresi en fazla 100 karakter olabilir.");
 
         RuleFor(x => x.Password)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Şifre zorunludur.")
-            .MinimumLength(6).WithMessage("Şifre en az 6 karakter olmalıdır.");
+            .MinimumLength(6).WithMessage("Şifre en az 6 karakter olmalıdır.")
+            .Matches(@"[A-Z]").WithMessage("Şifre en az bir büyük harf içermelidir.")
+            .Matches(@"[a-z]").WithMessage("Şifre en az bir küçük harf içermelidir.")
+            .Matches(@"[^a-zA-Z0-9]").WithMessage("Şifre en az bir özel karakter (!@#$%^&* vb.) içermelidir.");
     }
 }
