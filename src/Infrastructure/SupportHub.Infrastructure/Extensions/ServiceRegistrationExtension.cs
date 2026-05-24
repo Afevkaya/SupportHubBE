@@ -12,5 +12,6 @@ public static class ServiceRegistrationExtension
     {
         services.AddScoped<ICacheService, MemoryCacheService>();
         services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<ICurrentService, CurrentService>();
     }
 }
