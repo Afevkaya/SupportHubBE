@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SupportHub.Application.Features.Auths.Commands.LoginUser;
 using SupportHub.Application.Features.Auths.Commands.RegisterUser;
 
 namespace SupportHub.Api.Controllers
@@ -11,8 +12,15 @@ namespace SupportHub.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserCommand request)
         {
-            await mediator.Send(request);
-            return Ok();
+            var response = await mediator.Send(request);
+            return Ok(response);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginUserCommand request)
+        {
+            var response = await mediator.Send(request);
+            return Ok(response);
         }
     }
 }

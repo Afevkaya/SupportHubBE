@@ -9,5 +9,9 @@
     <ItemGroup>
       <ProjectReference Include="..\..\Core\SupportHub.Application\SupportHub.Application.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    </ItemGroup>
 
 </Project>

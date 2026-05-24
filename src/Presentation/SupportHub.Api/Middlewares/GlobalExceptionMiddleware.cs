@@ -49,6 +49,8 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             {
                 KeyNotFoundException => (int)HttpStatusCode.NotFound,
                 ArgumentNullException or ArgumentException or FormatException => (int)HttpStatusCode.BadRequest,
+                UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+                ValidationException => (int)HttpStatusCode.BadRequest,
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
