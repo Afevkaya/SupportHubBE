@@ -54,7 +54,7 @@ public class TokenService(IConfiguration configuration) : ITokenService
         return new ResponseCreateToken
         {
             AccessToken = accessToken,
-            ExpireAt = DateTime.UtcNow
+            ExpireAt = expiration
         };
     }
 }

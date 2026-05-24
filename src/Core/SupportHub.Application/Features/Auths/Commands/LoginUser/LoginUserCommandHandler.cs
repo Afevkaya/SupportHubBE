@@ -34,10 +34,13 @@ public class LoginUserCommandHandler(
         }
         var responseCreateToken = tokenService.GenerateToken(user.Id, user.Email!, $"{user.FirstName} {user.LastName}", cancellationToken);
         
-        
         logger.LogInformation("User with email: {Email} logged in successfully.", request.Email);
-        return new LoginUserCommandResponse(responseCreateToken.AccessToken, responseCreateToken.ExpireAt, user.Id,
-            user.Email, $"{user.FirstName} {user.LastName}");
+        return new LoginUserCommandResponse(
+            responseCreateToken.AccessToken, 
+            responseCreateToken.ExpireAt, 
+            user.Id,
+            user.Email, 
+            $"{user.FirstName} {user.LastName}");
 
     }
 }
