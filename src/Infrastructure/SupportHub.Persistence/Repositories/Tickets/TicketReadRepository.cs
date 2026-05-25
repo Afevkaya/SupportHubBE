@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses;
+using SupportHub.Application.DTOs.Responses.Tickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 using SupportHub.Domain.Entities;

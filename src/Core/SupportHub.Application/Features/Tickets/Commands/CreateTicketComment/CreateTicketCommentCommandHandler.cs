@@ -4,6 +4,8 @@ using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.TicketComments;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
+using SupportHub.Application.Abstractions.Services;
+using SupportHub.Application.DTOs.Responses.Auths;
 using SupportHub.Domain.Entities;
 
 namespace SupportHub.Application.Features.Tickets.Commands.CreateTicketComment;
@@ -13,6 +15,7 @@ public class CreateTicketCommentCommandHandler(
     ITicketCommentWriteRepository ticketCommentWriteRepository,
     ITicketActivityWriteRepository ticketActivityWriteRepository,
     ICacheService cacheService,
+    ICurrentService currentService,
     ILogger<CreateTicketCommentCommandHandler> logger) : IRequestHandler<CreateTicketCommentCommand, CreateTicketCommentCommandResponse>
 {    
 
@@ -25,7 +28,7 @@ public class CreateTicketCommentCommandHandler(
         var ticketComment = new TicketComment
         {
             TicketId = request.TicketId,
-            AuthorName = request.AuthorName,
+            AuthorUserId = currentService.UserId,
             Message = request.Message,
             CreatedDate = DateTime.UtcNow
         };
@@ -36,6 +39,7 @@ public class CreateTicketCommentCommandHandler(
         {
             Id = Guid.NewGuid(),
             TicketId = request.TicketId,
+            ActorUserId = currentService.UserId,
             ActivityType = Domain.Enums.TicketActivityType.CommentAdded,
             Description = $"Comment added by {request.AuthorName}",
             CreatedDate = DateTime.UtcNow
@@ -43,8 +47,8 @@ public class CreateTicketCommentCommandHandler(
         
         await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
         
-        logger.LogInformation("Created comment for ticket {TicketId} by {AuthorName}", request.TicketId, request.AuthorName);
-        return new CreateTicketCommentCommandResponse(response.Id, response.TicketId, response.AuthorName,
-            response.Message, response.CreatedDate);
+        logger.LogInformation("Created comment for ticket {TicketId} by {UserId}", request.TicketId, currentService?.UserId);
+        return new CreateTicketCommentCommandResponse(response.Id, response.TicketId,
+            response.Message, response.CreatedDate, new ResponseGetAuth(currentService?.UserId, currentService?.FullName));
     }
 }

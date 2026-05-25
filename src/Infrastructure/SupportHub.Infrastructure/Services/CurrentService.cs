@@ -22,4 +22,7 @@ public class CurrentService(IHttpContextAccessor httpContextAccessor) : ICurrent
                 : null;
         }
     }
+
+    public string? FullName => httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value + " " +
+                               httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Surname)?.Value;
 }

@@ -1,4 +1,4 @@
-﻿using SupportHub.Application.DTOs.Responses;
+﻿using SupportHub.Application.DTOs.Responses.Tickets;
 
 namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 
