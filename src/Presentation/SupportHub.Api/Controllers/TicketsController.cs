@@ -14,8 +14,8 @@ namespace SupportHub.Api.Controllers
     [ApiController]
     public class TicketsController(IMediator mediator) : ControllerBase
     {
-        [HttpGet]
         [Authorize]
+        [HttpGet]
         public async Task<IActionResult> GetTickets([FromQuery] GetAllTicketsQuery request)
         {
             var response = await mediator.Send(request);
@@ -36,6 +36,7 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
         
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketCommand request)
         {
@@ -43,6 +44,7 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
         
+        [Authorize]
         [HttpPatch("{id:guid}/status")]
         public async Task<IActionResult> UpdateTicketStatus([FromBody] UpdateTicketStatusCommand request, Guid id)
         {
@@ -51,6 +53,7 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
         
+        [Authorize]
         [HttpPost("{ticketId:guid}/comments")]
         public async Task<IActionResult> GetTicketDetail([FromBody] CreateTicketCommentCommand request, [FromRoute] Guid ticketId)
         {

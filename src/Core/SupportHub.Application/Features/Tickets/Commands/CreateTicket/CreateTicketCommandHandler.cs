@@ -3,8 +3,9 @@ using Microsoft.Extensions.Logging;
 using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
-using SupportHub.Application.Abstractions.Transactions;
-using SupportHub.Application.DTOs.Responses;
+using SupportHub.Application.Abstractions.Services;
+using SupportHub.Application.DTOs.Responses.Auths;
+using SupportHub.Application.DTOs.Responses.Tickets;
 using SupportHub.Domain.Entities;
 using SupportHub.Domain.Enums;
 
@@ -14,6 +15,7 @@ public class CreateTicketCommandHandler(
     ITicketWriteRepository ticketWriteRepository, 
     ITicketActivityWriteRepository ticketActivityWriteRepository,
     ICacheService cacheService,
+    ICurrentService currentService,
     ILogger<CreateTicketCommandHandler> logger) 
     : IRequestHandler<CreateTicketCommand, ResponseCreateTicket>
 {
@@ -35,6 +37,7 @@ public class CreateTicketCommandHandler(
         {
             Id = Guid.NewGuid(),
             TicketId = result.Id,
+            ActorUserId = currentService.UserId,
             ActivityType = TicketActivityType.Created,
             Description = $"Ticket created with status {result.Status} and priority {result.Priority}",
             CreatedDate = DateTime.UtcNow
@@ -47,10 +50,11 @@ public class CreateTicketCommandHandler(
             result.Description,
             result.Status.ToString(),
             result.Priority.ToString(),
-            result.CreatedDate
+            result.CreatedDate,
+            new ResponseGetAuth(currentService?.UserId, currentService?.FullName)
         );
         await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
-        logger.LogInformation("Ticket created with Id: {Id}, Status: {Status}, Priority: {Priority}", result.Id, result.Status, result.Priority);
+        logger.LogInformation("Ticket created with Id: {Id}, Status: {Status}, Priority: {Priority}, UserId: {UserId}", result.Id, result.Status, result.Priority, currentService?.UserId);
         return response;
     
     }

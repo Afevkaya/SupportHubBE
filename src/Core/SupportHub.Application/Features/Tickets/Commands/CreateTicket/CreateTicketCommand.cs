@@ -1,5 +1,5 @@
 ﻿using SupportHub.Application.Abstractions.Messaging;
-using SupportHub.Application.DTOs.Responses;
+using SupportHub.Application.DTOs.Responses.Tickets;
 using SupportHub.Domain.Enums;
 
 namespace SupportHub.Application.Features.Tickets.Commands.CreateTicket;

@@ -1,4 +1,4 @@
-﻿namespace SupportHub.Application.DTOs.Responses;
+﻿namespace SupportHub.Application.DTOs.Responses.Tickets;
 
 public record ResponseTicketActivity(
     string ActivityType,

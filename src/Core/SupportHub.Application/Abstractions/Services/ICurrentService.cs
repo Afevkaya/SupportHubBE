@@ -5,5 +5,6 @@ public interface ICurrentService
     public bool IsAuthenticated  { get; }
     public string? Email { get; }
     public Guid? UserId { get; }
+    public string? FullName { get; }
     
 }
