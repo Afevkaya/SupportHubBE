@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Security.Authentication;
 using System.Text.Json;
 using FluentValidation;
 using SupportHub.Api.Models.Responses;
@@ -49,7 +50,8 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             {
                 KeyNotFoundException => (int)HttpStatusCode.NotFound,
                 ArgumentNullException or ArgumentException or FormatException => (int)HttpStatusCode.BadRequest,
-                UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+                AuthenticationException => (int)HttpStatusCode.Unauthorized,
+                UnauthorizedAccessException => (int)HttpStatusCode.Forbidden,
                 ValidationException => (int)HttpStatusCode.BadRequest,
                 _ => (int)HttpStatusCode.InternalServerError
             };

@@ -11,6 +11,7 @@ namespace SupportHub.Infrastructure.Services;
 public class TokenService(IConfiguration configuration) : ITokenService
 {
     public ResponseCreateToken GenerateToken(Guid userId, string email, string fullName,
+        IEnumerable<string>? roles = null,
         CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -38,6 +39,10 @@ public class TokenService(IConfiguration configuration) : ITokenService
             new(ClaimTypes.Email, email),
             new(ClaimTypes.Name, fullName)
         };
+        if (roles != null)
+        {
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        }
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

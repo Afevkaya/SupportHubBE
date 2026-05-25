@@ -36,7 +36,14 @@ public class RegisterUserCommandHandler(
             logger.LogWarning("Failed to register user with email {Email}. Errors: {Errors}", email, errors);
             throw new InvalidOperationException($"Failed to register user: {errors}");
         }
-        logger.LogInformation("User registered. UserId: {UserId}, Email: {Email}", user.Id, user.Email);
+        var roleResult = await userManager.AddToRoleAsync(user, Constants.Roles.Customer);
+        if (!roleResult.Succeeded)
+        {
+            var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+            logger.LogWarning("Failed to assign 'Customer' role to user with email {Email}. Errors: {Errors}", email, errors);
+            throw new InvalidOperationException($"Failed to assign role: {errors}");
+        }
+        logger.LogInformation("User registered. UserId: {UserId}, Email: {Email} Role: {Role}", user.Id, user.Email, Constants.Roles.Customer);
         return new RegisterUserCommandResponse(user.Id, user.Email, $"{user.FirstName} {user.LastName}");
     }
 }

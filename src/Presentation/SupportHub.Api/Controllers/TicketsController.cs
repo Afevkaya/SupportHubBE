@@ -36,7 +36,7 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
         
-        [Authorize]
+        [Authorize(Roles = "SupportAgent, Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketCommand request)
         {
