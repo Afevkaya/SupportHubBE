@@ -32,7 +32,9 @@ public class LoginUserCommandHandler(
             logger.LogWarning("Login attempt failed for email: {Email}. Email not found.", request.Email);
             throw new Exception("Kullanıcının email adresi bulunamadı.");
         }
-        var responseCreateToken = tokenService.GenerateToken(user.Id, user.Email!, $"{user.FirstName} {user.LastName}", cancellationToken);
+        var userRoles = await userManager.GetRolesAsync(user);
+        var responseCreateToken = tokenService.GenerateToken(user.Id, user.Email!, $"{user.FirstName} {user.LastName}",
+            userRoles, cancellationToken: cancellationToken);
         
         logger.LogInformation("User with email: {Email} logged in successfully.", request.Email);
         return new LoginUserCommandResponse(

@@ -111,6 +111,7 @@ try
     });
 
     var app = builder.Build();
+    await app.Services.SeedDefaultRolesAsync();
 
     Log.Information("Creating HTTP request pipeline...");
     Log.Information("Environment: {EnvironmentName}", app.Environment.EnvironmentName); 
