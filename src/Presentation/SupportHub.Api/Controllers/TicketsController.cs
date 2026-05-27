@@ -22,6 +22,7 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
         
+        [Authorize]
         [HttpGet("open")]
         public async Task<IActionResult> GetOpenTickets([FromQuery] GetOpenTicketsQuery request)
         {

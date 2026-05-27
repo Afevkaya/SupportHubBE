@@ -13,8 +13,9 @@ namespace Persistence.Repositories.Tickets;
 
 public class TicketReadRepository(IConfiguration configuration) : ITicketReadRepository
 {
-    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, string sortBy = "CreatedDate",
-        string sortDirection = "desc", string? status = null, string? priority = null, string search = "")
+    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, Guid? userId,
+        string sortBy = "CreatedDate",
+        string sortDirection = "desc", string? status = null, string priority = "", string search = "")
     {
         if (page <= 0) page = 1;
         if (pageSize <= 0) pageSize = 10;
@@ -27,6 +28,12 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         // Parametreler ve WHERE clause oluştur
         var parameters = new DynamicParameters();
         var whereConditions = new List<string>();
+        
+        if (userId.HasValue)        
+        {
+            whereConditions.Add("\"CreatedByUserId\" = @UserId");
+            parameters.Add("UserId", userId.Value);
+        }
 
         // Status: int değerini enum'a çevir, sonra string'e dönüştür
         if (!string.IsNullOrWhiteSpace(status))
@@ -132,7 +139,8 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             totalPages);
     }
 
-    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, string sortBy = "CreatedDate", string sortDirection = "desc",
+    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, Guid? userId, 
+        string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default)
     {
         if (page <= 0) page = 1;
@@ -143,41 +151,63 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         await using var connection = new NpgsqlConnection(connectionString);
 
-        // Toplam kayıt sayısı
-        const string countSql = """
+        // Build where clause (Status is always Open for this method)
+        var parameters = new DynamicParameters();
+        var whereConditions = new List<string>
+        {
+            "\"Status\" = @Status"
+        };
+        parameters.Add("Status", TicketStatusType.Open.ToString());
+
+        if (userId.HasValue)
+        {
+            // limit to tickets created by this user
+            whereConditions.Add("\"CreatedByUserId\" = @UserId");
+            parameters.Add("UserId", userId.Value);
+        }
+
+        var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
+        // Total count
+        var countSql = $"""
             SELECT COUNT(1)
             FROM "Tickets"
-            WHERE "Status" = @Status
+            {whereClause}
             """;
 
-        var totalCount = await connection.QuerySingleAsync<int>(countSql, new { Status = TicketStatusType.Open.ToString() });
+        var totalCount = await connection.QuerySingleAsync<int>(countSql, parameters);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        // Sayfalama parametreleri
-        var offset = (page - 1) * pageSize;
-        
+        if (totalPages > 0 && page > totalPages)
+        {
+            page = totalPages;
+        }
+
+        // Sorting
         var sortColumn = sortBy?.ToLowerInvariant() switch
         {
             "title" => "\"Title\"",
             "status" => "\"Status\"",
             "createddate" => "\"CreatedDate\"",
+            "priority" => "\"Priority\"",
             _ => "\"CreatedDate\""
         };
         var direction = sortDirection?.ToLowerInvariant() == "asc" ? "ASC" : "DESC";
-        
+
+        // Pagination
+        var offset = (page - 1) * pageSize;
+        parameters.Add("PageSize", pageSize);
+        parameters.Add("Offset", offset);
+
         var sql = $"""
             SELECT "Id", "Title", "Status", "Priority", "CreatedDate"
             FROM "Tickets"
-            WHERE "Status" = @Status
+            {whereClause}
             ORDER BY {sortColumn} {direction}
             LIMIT @PageSize OFFSET @Offset
             """;
 
-        var rows = await connection.QueryAsync<TicketRow>(sql, new
-        {
-            Status = TicketStatusType.Open.ToString(),
-            PageSize = pageSize,
-            Offset = offset
-        });
+        var rows = await connection.QueryAsync<TicketRow>(sql, parameters);
 
         var items = rows
             .Select(x => new ResponseGetTicket(
@@ -187,8 +217,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
                 x.Priority,
                 x.CreatedDate))
             .ToList();
-        
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
         return new GetOpenTicketsQueryResponse(
             items,
             page,
