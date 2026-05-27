@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using SupportHub.Application.Abstractions.Messaging;
 
 namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
@@ -13,9 +13,9 @@ public record GetAllTicketsQuery(
     string SortDirection)
     : IQuery<GetAllTicketsQueryResponse>, ICacheableQuery
 {
-    public string GetCacheKey(Guid? currentUserId) =>
-        $"tickets_user_{currentUserId}_page_{Page}_size_{PageSize}_sort_{SortBy}_{SortDirection}";
+    string ICacheableQuery.GetCacheKey(Guid? currentUserId) =>
+        $"tickets_user_{currentUserId}_page_{Page}_size_{PageSize}_status_{Status}_search_{Search}_priority_{Priority}_sort_{SortBy}_{SortDirection}";
 
-    [NotMapped]
-    public TimeSpan Expiration => TimeSpan.FromMinutes(2);
+    TimeSpan ICacheableQuery.Expiration =>
+        TimeSpan.FromMinutes(2);
 }
