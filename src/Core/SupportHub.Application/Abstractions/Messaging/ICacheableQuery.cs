@@ -2,6 +2,7 @@
 
 public interface ICacheableQuery
 {
-    string CacheKey { get; }
+    string GetCacheKey(Guid? currentUserId);
+    
     TimeSpan Expiration { get; }
 }
