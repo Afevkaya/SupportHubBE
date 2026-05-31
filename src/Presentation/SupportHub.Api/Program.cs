@@ -135,6 +135,10 @@ try
     Log.Information("SupportHub API started successfully.");
     await app.RunAsync();
 }
+catch (HostAbortedException)
+{
+    // EF Core design-time tools can trigger this.
+}
 catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
