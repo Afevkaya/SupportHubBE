@@ -80,6 +80,7 @@ src/
       └── SupportHub.Api
 ```
 
+> Note: The repository currently implements `SupportHub.Persistence` and `SupportHub.Infrastructure` under `src/Infrastructure/`. The optional `SupportHub.SignalR` project is planned in the architecture but is not present in this workspace. Agents should not assume SignalR artifacts exist unless you add them intentionally.
 ---
 
 # 4. Layer Responsibilities
@@ -124,6 +125,9 @@ Includes:
 * Interfaces / abstractions
 * Validation
 * Use cases
+
+Current feature areas in this repository are `Features/Auths` and `Features/Tickets`.
+Response DTOs are grouped under `DTOs/Responses/Auths`, `DTOs/Responses/Tickets`, and `DTOs/Responses/Tokens`.
 
 Example folders:
 
@@ -255,6 +259,8 @@ Queries:
 * Should use read repositories
 * Prefer projection instead of loading full entities
 
+Cacheable queries implement `ICacheableQuery`; `CachingBehavior<TRequest, TResponse>` scopes the cache key with `ICurrentService.UserId` and uses the query's `Expiration`.
+
 ---
 
 ## Handler Rules
@@ -315,6 +321,9 @@ Rules:
 * Avoid massive generic repositories
 * Keep repositories focused
 
+In this repository, read repositories use `Dapper` + `Npgsql` for ticket read models, while write repositories use EF Core through `SupportHubDbContext`.
+Current repository interfaces are `ITicketReadRepository`, `ITicketWriteRepository`, `ITicketCommentWriteRepository`, and `ITicketActivityWriteRepository`.
+
 ---
 
 # 7. Entity Conventions
@@ -355,6 +364,8 @@ Database enum strategy:
 * Store enums as integers by default
 * Use string storage only if business readability is critical
 
+Repository-specific note: `SupportHubDbContext` currently maps `Ticket.Status`, `Ticket.Priority`, and `TicketActivity.ActivityType` to strings with `HasConversion<string>()`, so the read-side SQL in `TicketReadRepository` filters against string enum values.
+
 ---
 
 # 8. Database & Persistence
@@ -367,9 +378,9 @@ ORM:
 
 * EF Core
 
-Future additions:
+Current implementation:
 
-* Dapper for read-heavy scenarios
+* Dapper is already used for read-heavy ticket queries in `src/Infrastructure/SupportHub.Persistence/Repositories/Tickets/TicketReadRepository.cs`
 
 ## Migration Commands
 
@@ -378,6 +389,12 @@ dotnet ef migrations add InitialCreate
 dotnet ef database update
 ```
 
+Implementation notes for this repository:
+
+- Migrations are already present under `src/Infrastructure/SupportHub.Persistence/Migrations/` (multiple timestamped migration files including Identity and ticket-related migrations). Prefer using the existing migrations unless you intentionally create a new migration.
+- The persistence registration uses `AddPersistenceServices(this IServiceCollection, IConfiguration)` and reads the connection string `PostgresSql` from configuration. See `src/Infrastructure/SupportHub.Persistence/Extensions/ServiceRegistrationExtension.cs` for details.
+- The development connection string is set in `src/Presentation/SupportHub.Api/appsettings.Development.json` (Host=localhost;Port=5433;Database=SupportHubDb;Username=postgres;Password=...). Update the host/port to match your Docker or local Postgres instance.
+- Read-heavy ticket queries already use Dapper in `src/Infrastructure/SupportHub.Persistence/Repositories/Tickets/TicketReadRepository.cs`; EF Core remains the write side for tickets, comments, and activities.
 ---
 
 # 9. Docker Conventions
@@ -420,6 +437,8 @@ Agents should:
 * Prefer ILogger<T>
 * Produce structured logs
 
+Repository-specific note: `SupportHub.Api` boots Serilog in `Program.cs`, enriches logs with `CorrelationId`, and wires `CorrelationIdMiddleware`, `RequestLoggingMiddleware`, and `GlobalExceptionMiddleware` into the pipeline. Rolling file logs are written to `logs/log-.txt`.
+
 Good:
 
 ```csharp
@@ -447,7 +466,7 @@ Examples:
 ```text
 /api/tickets
 /api/users
-/api/auth
+/api/auths
 ```
 
 REST conventions:
@@ -462,6 +481,9 @@ Controllers should:
 * Stay thin
 * Only orchestrate requests
 * Delegate business logic to MediatR
+
+Current controllers use pluralized routes like `/api/auths` and `/api/tickets`; follow the existing resource naming when adding new controllers.
+Development startup also maps OpenAPI/Swagger (`AddOpenApi`, `app.MapOpenApi()`, `app.UseSwagger()`, `app.UseSwaggerUI()`) and `/health`.
 
 ---
 
@@ -495,6 +517,12 @@ Future integrations may include:
 * Email confirmation
 * Password reset flows
 
+Repository-specific notes:
+
+- The project includes a `TokenService` implementation at `src/Infrastructure/SupportHub.Infrastructure/Services/TokenService.cs` that reads `Jwt:SecretKey`, `Jwt:Issuer`, `Jwt:Audience` and `Jwt:ExpirationInMinutes` from configuration. The development JWT values are present in `src/Presentation/SupportHub.Api/appsettings.Development.json`.
+- Identity is configured when `AddPersistenceServices` is called (see `src/Infrastructure/SupportHub.Persistence/Extensions/ServiceRegistrationExtension.cs`) and uses `AppUser` + `IdentityRole<Guid>` with Entity Framework stores.
+- Program.cs configures JWT bearer authentication and calls `SeedDefaultRolesAsync()` at startup. The role seeds are implemented in `src/Infrastructure/SupportHub.Persistence/Extensions/IdentityRoleSeedExtensions.cs` (default roles: `Admin`, `SupportAgent`, `Customer`). Agents can rely on these seed steps during local runs.
+- `CurrentService` in `src/Infrastructure/SupportHub.Infrastructure/Services/CurrentService.cs` exposes `IsAuthenticated`, `Email`, `UserId`, and `FullName` from the authenticated principal, and `AuthsController` includes a protected `GET /api/auths/test` endpoint for verifying JWT claims during local development.
 ---
 
 # 14. Caching Strategy
@@ -514,6 +542,11 @@ Agents should:
 * Cache only expensive reads
 * Never cache mutable critical business operations carelessly
 
+Repository-specific notes:
+
+- The current implementation uses an in-memory cache service: `src/Infrastructure/SupportHub.Infrastructure/Caching/MemoryCacheService.cs`. It is registered as `ICacheService` in `src/Infrastructure/SupportHub.Infrastructure/Extensions/ServiceRegistrationExtension.cs` and `AddMemoryCache()` is invoked in `Program.cs`.
+- Redis is a planned future enhancement; do not add Redis-specific code unless there is a clear need and you update DI registration and configuration docs.
+- `CachingBehavior<TRequest, TResponse>` only applies to `ICacheableQuery` implementations, uses `ICurrentService.UserId` in the cache key, and `MemoryCacheService` keeps an internal key registry so prefix-based invalidation works.
 ---
 
 # 15. Messaging & Async Processing
@@ -630,6 +663,8 @@ dotnet sln list
 Get-ChildItem -Recurse -Filter *.csproj
 ```
 
+All projects currently target `net10.0`.
+
 ## Build solution
 
 ```powershell
@@ -641,6 +676,21 @@ dotnet build
 
 ```powershell
 dotnet test
+```
+
+There are currently no test projects in the solution; `dotnet test` becomes meaningful once test projects are added.
+
+Quick run / migration commands for this repository (PowerShell):
+
+```powershell
+dotnet restore; dotnet build
+dotnet run --project src/Presentation/SupportHub.Api/SupportHub.Api.csproj
+
+# Add migration (if you must create a new one):
+dotnet ef migrations add <Name> --project src/Infrastructure/SupportHub.Persistence/SupportHub.Persistence.csproj --startup-project src/Presentation/SupportHub.Api/SupportHub.Api.csproj
+
+# Apply migrations to the configured database (startup project determines configuration):
+dotnet ef database update --project src/Infrastructure/SupportHub.Persistence/SupportHub.Persistence.csproj --startup-project src/Presentation/SupportHub.Api/SupportHub.Api.csproj
 ```
 
 ---
