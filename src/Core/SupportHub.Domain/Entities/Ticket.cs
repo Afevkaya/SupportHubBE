@@ -11,6 +11,7 @@ public class Ticket : BaseEntity
     public DateTime? UpdatedDate { get; set; }
     public TicketPriorityType Priority { get; set; } = TicketPriorityType.Medium;
     public Guid? CreatedByUserId { get; set; }
+    public Guid? AssignedAgentId { get; set; }
     public ICollection<TicketComment> TicketComments { get; set; } = new List<TicketComment>();
     public ICollection<TicketActivity> TicketActivities { get; set; } = new List<TicketActivity>();
 }

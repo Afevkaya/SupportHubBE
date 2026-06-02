@@ -126,8 +126,8 @@ Includes:
 * Validation
 * Use cases
 
-Current feature areas in this repository are `Features/Auths` and `Features/Tickets`.
-Response DTOs are grouped under `DTOs/Responses/Auths`, `DTOs/Responses/Tickets`, and `DTOs/Responses/Tokens`.
+Current feature areas in this repository are `Features/Auths` and `Features/Tickets`; auth commands live under `Commands/LoginUser` and `Commands/RegisterUser`, and ticket features currently include `Commands/CreateTicket`, `Commands/UpdateTicketStatus`, `Commands/AssignTicket`, `Commands/CreateTicketComment`, plus `Queries/Tickets/GetAllTickets`, `GetOpenTickets`, and `GetTicketDetail`.
+Request DTOs live under `DTOs/Requests`, and response DTOs are grouped under `DTOs/Responses/Auths`, `DTOs/Responses/Tickets`, and `DTOs/Responses/Tokens`.
 
 Example folders:
 
@@ -145,8 +145,15 @@ Feature structure example:
 Features/
  └── Tickets/
       ├── Commands/
-      ├── Queries/
-      └── Rules/
+      │    ├── CreateTicket/
+      │    ├── UpdateTicketStatus/
+      │    ├── AssignTicket/
+      │    └── CreateTicketComment/
+      └── Queries/
+           └── Tickets/
+                ├── GetAllTickets/
+                ├── GetOpenTickets/
+                └── GetTicketDetail/
 ```
 
 CQRS naming conventions:
@@ -260,6 +267,7 @@ Queries:
 * Prefer projection instead of loading full entities
 
 Cacheable queries implement `ICacheableQuery`; `CachingBehavior<TRequest, TResponse>` scopes the cache key with `ICurrentService.UserId` and uses the query's `Expiration`.
+Application registration wires MediatR pipeline behaviors for validation, transactions, query performance, and caching through `AddApplicationServices()`. Command handlers run inside `TransactionBehavior<TRequest, TResponse>` and commit through `IUnitOfWork`; query handlers are timed by `QueryPerformanceBehavior<TRequest, TResponse>`.
 
 ---
 
@@ -336,8 +344,6 @@ public class BaseEntity
     public Guid Id { get; set; }
 
     public DateTime CreatedDate { get; set; }
-
-    public DateTime? UpdatedDate { get; set; }
 }
 ```
 
@@ -347,6 +353,8 @@ Rules:
 * Use UTC time
 * Prefer explicit enums
 
+In the current domain model, `Ticket` carries its own optional `UpdatedDate` field; `BaseEntity` only supplies `Id` and `CreatedDate`.
+
 Enum example:
 
 ```csharp
@@ -354,7 +362,7 @@ public enum TicketStatusType
 {
     Open = 0,
     InProgress = 1,
-    WaitingForCustomer = 2,
+    WaitingForResponse = 2,
     Closed = 3
 }
 ```
@@ -395,6 +403,8 @@ Implementation notes for this repository:
 - The persistence registration uses `AddPersistenceServices(this IServiceCollection, IConfiguration)` and reads the connection string `PostgresSql` from configuration. See `src/Infrastructure/SupportHub.Persistence/Extensions/ServiceRegistrationExtension.cs` for details.
 - The development connection string is set in `src/Presentation/SupportHub.Api/appsettings.Development.json` (Host=localhost;Port=5433;Database=SupportHubDb;Username=postgres;Password=...). Update the host/port to match your Docker or local Postgres instance.
 - Read-heavy ticket queries already use Dapper in `src/Infrastructure/SupportHub.Persistence/Repositories/Tickets/TicketReadRepository.cs`; EF Core remains the write side for tickets, comments, and activities.
+- `src/Infrastructure/SupportHub.Persistence/UnitOfWorks/UnitOfWork.cs` is the transaction boundary used by `TransactionBehavior`; command handlers should rely on repositories plus `IUnitOfWork` instead of directly using `DbContext`.
+- `Program.cs` registers a PostgreSQL health check with `AddNpgSql` against `PostgresSql`, and `/health` is the readiness endpoint for database connectivity.
 ---
 
 # 9. Docker Conventions
@@ -484,6 +494,7 @@ Controllers should:
 
 Current controllers use pluralized routes like `/api/auths` and `/api/tickets`; follow the existing resource naming when adding new controllers.
 Development startup also maps OpenAPI/Swagger (`AddOpenApi`, `app.MapOpenApi()`, `app.UseSwagger()`, `app.UseSwaggerUI()`) and `/health`.
+API error responses are modeled with `src/Presentation/SupportHub.Api/Models/Responses/ErrorResponse.cs` and `ValidationErrorResponse.cs`; the global exception and validation paths should preserve those shapes.
 
 ---
 
@@ -500,6 +511,29 @@ Validation belongs in:
 Avoid:
 
 * Massive validation inside controllers
+
+# 12.5 Testing Strategy
+
+Planned test structure:
+
+tests/
+├── SupportHub.UnitTests
+├── SupportHub.IntegrationTests
+└── SupportHub.ArchitectureTests
+
+Guidelines:
+
+- Business rules should be covered by unit tests.
+- Critical API endpoints should have integration tests.
+- Architecture tests should verify Clean Architecture dependency rules.
+- New features should include corresponding tests whenever practical.
+
+Future tooling:
+
+- xUnit
+- FluentAssertions
+- NetArchTest
+- Testcontainers
 
 ---
 
@@ -547,6 +581,95 @@ Repository-specific notes:
 - The current implementation uses an in-memory cache service: `src/Infrastructure/SupportHub.Infrastructure/Caching/MemoryCacheService.cs`. It is registered as `ICacheService` in `src/Infrastructure/SupportHub.Infrastructure/Extensions/ServiceRegistrationExtension.cs` and `AddMemoryCache()` is invoked in `Program.cs`.
 - Redis is a planned future enhancement; do not add Redis-specific code unless there is a clear need and you update DI registration and configuration docs.
 - `CachingBehavior<TRequest, TResponse>` only applies to `ICacheableQuery` implementations, uses `ICurrentService.UserId` in the cache key, and `MemoryCacheService` keeps an internal key registry so prefix-based invalidation works.
+
+# 14.5 Logging Rules
+
+Logging should be structured and meaningful.
+
+Command Handlers:
+
+- Log operation start
+- Log successful completion
+- Log business validation failures
+- Log unexpected exceptions
+
+Query Handlers:
+
+- Log slow queries
+- Log unexpected exceptions
+
+Avoid:
+
+- Logging inside large loops
+- Logging sensitive information
+- Excessive Information logs
+
+Preferred format:
+
+_logger.LogInformation(
+"Ticket {TicketId} assigned to {UserId}",
+ticketId,
+userId);
+
+
+# 14.6 Ticket Ownership Rules
+
+Authorization rules:
+
+Customer:
+- Can create tickets
+- Can view only their own tickets
+- Can add comments to their own tickets
+
+SupportAgent:
+- Can view all tickets
+- Can assign tickets
+- Can update ticket status
+- Can add comments
+
+Admin:
+- Full system access
+
+Ownership checks belong in the Application layer.
+
+Controllers should not implement ownership logic.
+
+# 14.7 Ticket Activity Tracking
+
+SupportHub maintains an activity history for tickets.
+
+Important actions should create TicketActivity records.
+
+Examples:
+
+- Ticket Created
+- Ticket Assigned
+- Ticket Status Changed
+- Comment Added
+- Ticket Closed
+
+Activity creation should happen within command handlers.
+
+Activity history should be queryable without affecting ticket write operations.
+
+# 14.8 Authorization Standards
+
+Authentication:
+- JWT Bearer
+
+Roles:
+
+- Admin
+- SupportAgent
+- Customer
+
+Guidelines:
+
+- Prefer policy-based authorization.
+- Avoid role checks inside controllers.
+- Authorization logic should remain centralized.
+- Business ownership checks belong in Application layer.
+
 ---
 
 # 15. Messaging & Async Processing
@@ -663,7 +786,9 @@ dotnet sln list
 Get-ChildItem -Recurse -Filter *.csproj
 ```
 
-All projects currently target `net10.0`.
+Target framework versions should be determined from the project files.
+
+Agents should inspect *.csproj files rather than assuming a specific .NET version.
 
 ## Build solution
 
@@ -730,5 +855,68 @@ It is intended to evolve into a production-style backend system used for:
 * Performance optimization exercises
 
 All additions should support those learning goals.
+
+# 22.5 Current Repository Status
+
+Implemented:
+
+✓ Clean Architecture structure
+✓ CQRS + MediatR
+✓ EF Core
+✓ PostgreSQL
+✓ Identity
+✓ JWT Authentication
+✓ Role Seeding
+✓ Dapper Read Side
+✓ Ticket CRUD
+✓ Ticket Assignment
+✓ Ticket Comments
+✓ Ticket Activities
+✓ Ticket Ownership
+✓ Caching Pipeline
+✓ Validation Pipeline
+✓ Transaction Pipeline
+✓ Structured Logging
+
+Planned:
+
+□ Redis
+□ RabbitMQ
+□ SignalR
+□ Email Notifications
+□ Dashboard Queries
+□ Pagination
+□ Filtering
+□ Sorting
+□ Docker Compose
+□ CI/CD
+□ Kubernetes
+
+# 22.6 Roadmap
+
+Near-Term
+
+- Ticket Activity Feed Endpoint
+- Pagination
+- Filtering
+- Sorting
+- Dashboard Queries
+- Unit Tests
+
+Mid-Term
+
+- Redis Cache
+- RabbitMQ
+- Email Notifications
+- SignalR Notifications
+- Integration Tests
+
+Long-Term
+
+- Docker Compose
+- GitHub Actions
+- Kubernetes
+- Distributed System Experiments
+- Performance Optimization
 
 ---

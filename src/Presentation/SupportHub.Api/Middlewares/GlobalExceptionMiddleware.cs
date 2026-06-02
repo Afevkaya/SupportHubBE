@@ -52,7 +52,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                 ArgumentNullException or ArgumentException or FormatException => (int)HttpStatusCode.BadRequest,
                 AuthenticationException => (int)HttpStatusCode.Unauthorized,
                 UnauthorizedAccessException => (int)HttpStatusCode.Forbidden,
-                ValidationException => (int)HttpStatusCode.BadRequest,
+                ValidationException or InvalidOperationException => (int)HttpStatusCode.BadRequest,
                 _ => (int)HttpStatusCode.InternalServerError
             };
 

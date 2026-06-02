@@ -21,7 +21,7 @@ public class CreateTicketCommentCommandHandler(
 
     public async Task<CreateTicketCommentCommandResponse> Handle(CreateTicketCommentCommand request, CancellationToken cancellationToken)
     {
-        var exists = await ticketReadRepository.GetByIdAsync(request.TicketId);
+        var exists = await ticketReadRepository.AnyTicketAsync(request.TicketId);
         if (!exists)
             throw new KeyNotFoundException("Ticket not found");
         
