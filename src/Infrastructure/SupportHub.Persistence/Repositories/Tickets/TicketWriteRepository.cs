@@ -23,4 +23,14 @@ public class TicketWriteRepository(SupportHubDbContext context) : ITicketWriteRe
         ticket.UpdatedDate = DateTime.UtcNow;
         return ticket;
     }
+
+    public async Task<Ticket> AssignTicketToUserAsync(Guid ticketId, Guid assignedAgentId)
+    {
+        var ticket = await context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+        if (ticket == null) throw new KeyNotFoundException("Ticket not found.");
+
+        ticket.AssignedAgentId = assignedAgentId;
+        ticket.UpdatedDate = DateTime.UtcNow;
+        return ticket;
+    }
 }

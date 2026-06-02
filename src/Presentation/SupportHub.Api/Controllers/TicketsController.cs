@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SupportHub.Application.Features.Tickets.Commands.AssignTicket;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicketComment;
 using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
@@ -21,7 +22,7 @@ namespace SupportHub.Api.Controllers
             var response = await mediator.Send(request);
             return Ok(response);
         }
-        
+
         [Authorize]
         [HttpGet("open")]
         public async Task<IActionResult> GetOpenTickets([FromQuery] GetOpenTicketsQuery request)
@@ -29,14 +30,14 @@ namespace SupportHub.Api.Controllers
             var response = await mediator.Send(request);
             return Ok(response);
         }
-        
+
         [HttpGet("{Id:guid}")]
         public async Task<IActionResult> GetTicketDetail([FromRoute] GetTicketDetailQuery request)
         {
             var response = await mediator.Send(request);
             return Ok(response);
         }
-        
+
         [Authorize(Roles = "SupportAgent, Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketCommand request)
@@ -44,7 +45,7 @@ namespace SupportHub.Api.Controllers
             var response = await mediator.Send(request);
             return Ok(response);
         }
-        
+
         [Authorize]
         [HttpPatch("{id:guid}/status")]
         public async Task<IActionResult> UpdateTicketStatus([FromBody] UpdateTicketStatusCommand request, Guid id)
@@ -53,10 +54,20 @@ namespace SupportHub.Api.Controllers
             var response = await mediator.Send(command);
             return Ok(response);
         }
-        
+
         [Authorize]
         [HttpPost("{ticketId:guid}/comments")]
-        public async Task<IActionResult> GetTicketDetail([FromBody] CreateTicketCommentCommand request, [FromRoute] Guid ticketId)
+        public async Task<IActionResult> GetTicketDetail([FromBody] CreateTicketCommentCommand request,
+            [FromRoute] Guid ticketId)
+        {
+            var command = request with { TicketId = ticketId };
+            var response = await mediator.Send(command);
+            return Ok(response);
+        }
+
+        [Authorize(Roles = "SupportAgent, Admin")]
+        [HttpPatch("{ticketId}/assign")]
+        public async Task<IActionResult> AssignTicket([FromRoute] Guid ticketId, [FromBody] AssignTicketCommand request)
         {
             var command = request with { TicketId = ticketId };
             var response = await mediator.Send(command);

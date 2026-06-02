@@ -226,6 +226,23 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             totalPages);
     }
 
+    public async Task<Ticket?> GetTicketAsync(Guid id)
+    {
+        var connectionString = configuration.GetConnectionString("PostgresSql")
+            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
+
+        await using var connection = new NpgsqlConnection(connectionString);
+
+        const string sql = """
+            SELECT "Id", "AssignedAgentId"
+            FROM "Tickets"
+            WHERE "Id" = @Id
+            """;
+
+        var ticket = await connection.QuerySingleOrDefaultAsync<Ticket>(sql, new { Id = id });
+
+        return ticket ?? throw new KeyNotFoundException("Ticket bulunamadı");
+    }
     public async Task<Ticket?> GetTicketDetail(Guid id)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql")
@@ -277,7 +294,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         return ticketLookup.Values.FirstOrDefault();
     }
 
-    public async Task<bool> GetByIdAsync(Guid id)
+    public async Task<bool> AnyTicketAsync(Guid id)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql")
             ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");

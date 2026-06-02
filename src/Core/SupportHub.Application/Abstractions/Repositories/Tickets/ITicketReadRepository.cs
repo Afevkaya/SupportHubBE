@@ -11,6 +11,7 @@ public interface ITicketReadRepository
     Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, Guid? userId,
         string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default);
+    Task<Ticket?> GetTicketAsync(Guid id);
     Task<Ticket?> GetTicketDetail(Guid id);
-    Task<bool> GetByIdAsync(Guid id);
+    Task<bool> AnyTicketAsync(Guid id);
 }
