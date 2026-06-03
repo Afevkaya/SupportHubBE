@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SupportHub.Application.Constants;
 using SupportHub.Application.Features.Tickets.Commands.AssignTicket;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicket;
 using SupportHub.Application.Features.Tickets.Commands.CreateTicketComment;
 using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
+using SupportHub.Application.Features.Tickets.Queries.Tickets.GetMyAssigned;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketDetail;
 
@@ -38,7 +40,7 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
 
-        [Authorize(Roles = "SupportAgent, Admin")]
+        [Authorize(Roles = Roles.Customer + "," + Roles.Admin)]
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketCommand request)
         {
@@ -65,12 +67,20 @@ namespace SupportHub.Api.Controllers
             return Ok(response);
         }
 
-        [Authorize(Roles = "SupportAgent, Admin")]
+        [Authorize(Roles = Roles.SupportAgent + "," + Roles.Admin)]
         [HttpPatch("{ticketId}/assign")]
         public async Task<IActionResult> AssignTicket([FromRoute] Guid ticketId, [FromBody] AssignTicketCommand request)
         {
             var command = request with { TicketId = ticketId };
             var response = await mediator.Send(command);
+            return Ok(response);
+        }
+
+        [Authorize(Roles = Roles.SupportAgent + "," + Roles.Admin)]
+        [HttpGet("my-assigned")]
+        public async Task<IActionResult> GetMyAssignedTickets()
+        {
+            var response = await mediator.Send(new GetMyAssignedTicketsQuery());
             return Ok(response);
         }
     }

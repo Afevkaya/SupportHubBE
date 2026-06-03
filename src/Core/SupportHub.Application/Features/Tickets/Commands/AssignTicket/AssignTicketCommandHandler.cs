@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Constants;
 using SupportHub.Domain.Entities.Identity;
@@ -11,6 +12,7 @@ public class AssignTicketCommandHandler(
     ITicketReadRepository  ticketReadRepository,
     ITicketWriteRepository  ticketWriteRepository,
     UserManager<AppUser> userManager,
+    ICacheService cacheService,
     ILogger<AssignTicketCommandHandler> logger)
     : IRequestHandler<AssignTicketCommand, AssignTicketCommandResponse>
 {
@@ -39,6 +41,7 @@ public class AssignTicketCommandHandler(
         
         var oldAssignedAgentId = ticket.AssignedAgentId;
         var updatedTicket = await ticketWriteRepository.AssignTicketToUserAsync(request.TicketId, request.AssignedAgentId);
+        await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
         
         logger.LogInformation("Ticket {TicketId} reassigned from agent {OldAssignedAgentId} to agent {NewAssignedAgentId}", ticket.Id, oldAssignedAgentId, updatedTicket.AssignedAgentId);
         return new AssignTicketCommandResponse(updatedTicket.Id, updatedTicket.AssignedAgentId!.Value, "Bilet başarıyla atandı");

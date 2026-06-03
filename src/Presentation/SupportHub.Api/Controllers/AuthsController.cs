@@ -1,5 +1,4 @@
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.Features.Auths.Commands.LoginUser;
@@ -23,18 +22,6 @@ namespace SupportHub.Api.Controllers
         {
             var response = await mediator.Send(request);
             return Ok(response);
-        }
-
-        [Authorize]
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return Ok(new
-            {
-                IsAuthenticated = currentService.IsAuthenticated,
-                Email = currentService.Email,
-                UserId = currentService.UserId
-            });
         }
     }
 }

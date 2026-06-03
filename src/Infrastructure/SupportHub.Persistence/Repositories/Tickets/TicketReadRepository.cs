@@ -294,6 +294,21 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         return ticketLookup.Values.FirstOrDefault();
     }
 
+    public async Task<List<Ticket>> GetMyAssignedTicketsAsync(Guid agentId, CancellationToken cancellationToken = default)
+    {
+        var connectionString = configuration.GetConnectionString("PostgresSql") 
+            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
+        await using var connection = new NpgsqlConnection(connectionString);
+        var sql = """
+                  SELECT "Id", "Title", "Status", "CreatedDate"
+                  FROM "Tickets"
+                  WHERE "AssignedAgentId" = @AgentId
+                  ORDER BY "CreatedDate" DESC
+                  """;
+        var agentTickets = await connection.QueryAsync<Ticket>(sql, new { AgentId = agentId });
+        return agentTickets.ToList();
+    }
+
     public async Task<bool> AnyTicketAsync(Guid id)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql")
