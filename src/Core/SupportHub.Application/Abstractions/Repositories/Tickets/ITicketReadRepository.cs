@@ -13,5 +13,6 @@ public interface ITicketReadRepository
         CancellationToken cancellationToken = default);
     Task<Ticket?> GetTicketAsync(Guid id);
     Task<Ticket?> GetTicketDetail(Guid id);
+    Task<List<Ticket>> GetMyAssignedTicketsAsync(Guid agentId, CancellationToken cancellationToken = default);
     Task<bool> AnyTicketAsync(Guid id);
 }
