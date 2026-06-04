@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
-using SupportHub.Application.DTOs.Responses;
 using SupportHub.Application.DTOs.Responses.Tickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
@@ -234,7 +233,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         await using var connection = new NpgsqlConnection(connectionString);
 
         const string sql = """
-            SELECT "Id", "AssignedAgentId"
+            SELECT "Id", "CreatedByUserId", "AssignedAgentId"
             FROM "Tickets"
             WHERE "Id" = @Id
             """;
@@ -253,7 +252,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         const string sql = """
             SELECT
                 t."Id", t."Title", t."Description", t."Status", t."Priority", t."CreatedDate", t."UpdatedDate",
-                c."Id", c."Message", c."AuthorName", c."TicketId", c."CreatedDate",
+                c."Id", c."Message", c."AuthorUserId", c."TicketId", c."CreatedDate",
                 a."Id", a."ActivityType", a."Description", a."TicketId", a."CreatedDate"
             FROM "Tickets" t
             LEFT JOIN "TicketComments" c ON c."TicketId" = t."Id"
@@ -293,7 +292,6 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         return ticketLookup.Values.FirstOrDefault();
     }
-
     public async Task<List<Ticket>> GetMyAssignedTicketsAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql") 
@@ -308,7 +306,6 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         var agentTickets = await connection.QueryAsync<Ticket>(sql, new { AgentId = agentId });
         return agentTickets.ToList();
     }
-
     public async Task<bool> AnyTicketAsync(Guid id)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql")

@@ -30,6 +30,7 @@ public static class ServiceRegistrationExtension
         services.AddScoped<ITicketReadRepository, TicketReadRepository>();
         services.AddScoped<ITicketWriteRepository, TicketWriteRepository>();
         services.AddScoped<ITicketCommentWriteRepository, TicketCommentWriteRepository>();
+        services.AddScoped<ITicketCommentReadRepository, TicketCommentReadRepository>();
         services.AddScoped<ITicketActivityWriteRepository, TicketActivityWriteRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
