@@ -9,6 +9,7 @@ using SupportHub.Application.Features.Tickets.Commands.UpdateTicketStatus;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetMyAssigned;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
+using SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketComments;
 using SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketDetail;
 
 namespace SupportHub.Api.Controllers
@@ -56,17 +57,7 @@ namespace SupportHub.Api.Controllers
             var response = await mediator.Send(command);
             return Ok(response);
         }
-
-        [Authorize]
-        [HttpPost("{ticketId:guid}/comments")]
-        public async Task<IActionResult> GetTicketDetail([FromBody] CreateTicketCommentCommand request,
-            [FromRoute] Guid ticketId)
-        {
-            var command = request with { TicketId = ticketId };
-            var response = await mediator.Send(command);
-            return Ok(response);
-        }
-
+        
         [Authorize(Roles = Roles.SupportAgent + "," + Roles.Admin)]
         [HttpPatch("{ticketId}/assign")]
         public async Task<IActionResult> AssignTicket([FromRoute] Guid ticketId, [FromBody] AssignTicketCommand request)
@@ -81,6 +72,23 @@ namespace SupportHub.Api.Controllers
         public async Task<IActionResult> GetMyAssignedTickets()
         {
             var response = await mediator.Send(new GetMyAssignedTicketsQuery());
+            return Ok(response);
+        }
+        
+        [Authorize]
+        [HttpPost("{ticketId:guid}/comments")]
+        public async Task<IActionResult> CreateComments([FromBody] CreateTicketCommentCommand request, [FromRoute] Guid ticketId)
+        {
+            var command = request with { TicketId = ticketId };
+            var response = await mediator.Send(command);
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("{ticketId:guid}/comments")]
+        public async Task<IActionResult> GetComments([FromRoute] Guid ticketId)
+        {
+            var response = await mediator.Send(new GetTicketCommentsQuery(ticketId));
             return Ok(response);
         }
     }

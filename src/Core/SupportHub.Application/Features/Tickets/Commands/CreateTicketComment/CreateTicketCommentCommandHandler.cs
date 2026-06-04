@@ -1,12 +1,15 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using SupportHub.Application.Abstractions.Caching;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.TicketComments;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Abstractions.Services;
+using SupportHub.Application.Constants;
 using SupportHub.Application.DTOs.Responses.Auths;
 using SupportHub.Domain.Entities;
+using SupportHub.Domain.Entities.Identity;
 
 namespace SupportHub.Application.Features.Tickets.Commands.CreateTicketComment;
 
@@ -14,21 +17,39 @@ public class CreateTicketCommentCommandHandler(
     ITicketReadRepository ticketReadRepository,
     ITicketCommentWriteRepository ticketCommentWriteRepository,
     ITicketActivityWriteRepository ticketActivityWriteRepository,
-    ICacheService cacheService,
     ICurrentService currentService,
+    UserManager<AppUser> userManager,
     ILogger<CreateTicketCommentCommandHandler> logger) : IRequestHandler<CreateTicketCommentCommand, CreateTicketCommentCommandResponse>
 {    
 
     public async Task<CreateTicketCommentCommandResponse> Handle(CreateTicketCommentCommand request, CancellationToken cancellationToken)
     {
-        var exists = await ticketReadRepository.AnyTicketAsync(request.TicketId);
-        if (!exists)
-            throw new KeyNotFoundException("Ticket not found");
+        var ticket = await ticketReadRepository.GetTicketAsync(request.TicketId);
+        if (ticket == null)
+            throw new KeyNotFoundException("Ticket bulunamadı");
+        
+        var currentUserId = currentService.UserId
+                            ?? throw new UnauthorizedAccessException("Kullanıcı bilgisi bulunamadı");
+
+        var currentUser = await userManager.FindByIdAsync(currentUserId.ToString());
+        var roles = currentUser is null
+            ? []
+            : await userManager.GetRolesAsync(currentUser);
+
+        var canCreateComment =
+            roles.Contains(Roles.Admin) ||
+            roles.Contains(Roles.SupportAgent) ||
+            currentUserId == ticket.CreatedByUserId ||
+            currentUserId == ticket.AssignedAgentId;
+
+        if (!canCreateComment)
+            throw new UnauthorizedAccessException("Bu bileti yorumlamak için yetkiniz yok");
         
         var ticketComment = new TicketComment
         {
+            Id = Guid.NewGuid(),
             TicketId = request.TicketId,
-            AuthorUserId = currentService.UserId,
+            AuthorUserId = currentUserId,
             Message = request.Message,
             CreatedDate = DateTime.UtcNow
         };
@@ -39,16 +60,14 @@ public class CreateTicketCommentCommandHandler(
         {
             Id = Guid.NewGuid(),
             TicketId = request.TicketId,
-            ActorUserId = currentService.UserId,
+            ActorUserId = currentUserId,
             ActivityType = Domain.Enums.TicketActivityType.CommentAdded,
-            Description = $"Comment added by {request.AuthorName}",
+            Description = $"Comment added by {currentService.FullName}",
             CreatedDate = DateTime.UtcNow
         });
         
-        await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
-        
-        logger.LogInformation("Created comment for ticket {TicketId} by {UserId}", request.TicketId, currentService?.UserId);
+        logger.LogInformation("Created comment for ticket {TicketId} by {UserId}", request.TicketId, currentUserId);
         return new CreateTicketCommentCommandResponse(response.Id, response.TicketId,
-            response.Message, response.CreatedDate, new ResponseGetAuth(currentService?.UserId, currentService?.FullName));
+            response.Message, response.CreatedDate, new ResponseGetAuth(currentUserId, currentService.FullName));
     }
 }
