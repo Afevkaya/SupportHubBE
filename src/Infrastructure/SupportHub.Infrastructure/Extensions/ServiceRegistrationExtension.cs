@@ -10,7 +10,7 @@ public static class ServiceRegistrationExtension
 {
     public static void AddInfrastructureServices(this IServiceCollection services)
     {
-        services.AddScoped<ICacheService, MemoryCacheService>();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<ICurrentService, CurrentService>();
     }

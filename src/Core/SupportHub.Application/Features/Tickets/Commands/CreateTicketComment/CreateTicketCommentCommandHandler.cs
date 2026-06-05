@@ -18,6 +18,7 @@ public class CreateTicketCommentCommandHandler(
     ITicketCommentWriteRepository ticketCommentWriteRepository,
     ITicketActivityWriteRepository ticketActivityWriteRepository,
     ICurrentService currentService,
+    ICacheService cacheService,
     UserManager<AppUser> userManager,
     ILogger<CreateTicketCommentCommandHandler> logger) : IRequestHandler<CreateTicketCommentCommand, CreateTicketCommentCommandResponse>
 {    
@@ -65,6 +66,8 @@ public class CreateTicketCommentCommandHandler(
             Description = $"Comment added by {currentService.FullName}",
             CreatedDate = DateTime.UtcNow
         });
+
+        await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
         
         logger.LogInformation("Created comment for ticket {TicketId} by {UserId}", request.TicketId, currentUserId);
         return new CreateTicketCommentCommandResponse(response.Id, response.TicketId,
