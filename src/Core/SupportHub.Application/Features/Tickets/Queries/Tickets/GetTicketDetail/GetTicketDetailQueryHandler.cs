@@ -24,8 +24,14 @@ public class GetTicketDetailQueryHandler(
                 ticket.Priority.ToString(),
                 ticket.CreatedDate,
                 ticket.UpdatedDate,
-                ticket.TicketComments.Select(c => new ResponseTicketComment(currentService?.FullName ?? string.Empty,c.Message)).ToList(),
-                ticket.TicketActivities.Select(a => new ResponseTicketActivity(a.ActivityType.ToString(), a.Description, a.CreatedDate)).ToList()
+                ticket.TicketComments
+                    .OrderBy(c => c.CreatedDate)
+                    .Select(c => new ResponseTicketComment(currentService?.FullName ?? string.Empty, c.Message))
+                    .ToList(),
+                ticket.TicketActivities
+                    .OrderBy(a => a.CreatedDate)
+                    .Select(a => new ResponseTicketActivity(a.ActivityType.ToString(), a.Description, a.CreatedDate))
+                    .ToList()
             );
         logger.LogWarning("Ticket with id {Id} not found", request.Id);
         throw new KeyNotFoundException("Ticket not found");

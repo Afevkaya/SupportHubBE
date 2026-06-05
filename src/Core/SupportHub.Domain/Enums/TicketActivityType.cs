@@ -3,6 +3,7 @@
 public enum TicketActivityType
 {
     Created,
+    Assigned,
     StatusChanged,
     CommentAdded,
     PriorityChanged
