@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence.Contexts;
+using Persistence.Repositories;
 using Persistence.Repositories.TicketActivities;
 using Persistence.Repositories.TicketComments;
 using Persistence.Repositories.Tickets;
 using Persistence.UnitOfWorks;
+using SupportHub.Application.Abstractions.Repositories;
 using SupportHub.Application.Abstractions.Repositories.TicketActivities;
 using SupportHub.Application.Abstractions.Repositories.TicketComments;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
@@ -33,5 +35,6 @@ public static class ServiceRegistrationExtension
         services.AddScoped<ITicketCommentReadRepository, TicketCommentReadRepository>();
         services.AddScoped<ITicketActivityWriteRepository, TicketActivityWriteRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
     }
 }

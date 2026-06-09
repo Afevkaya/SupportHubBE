@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.Features.Auths.Commands.LoginUser;
+using SupportHub.Application.Features.Auths.Commands.Logout;
+using SupportHub.Application.Features.Auths.Commands.RefreshToken;
 using SupportHub.Application.Features.Auths.Commands.RegisterUser;
 
 namespace SupportHub.Api.Controllers
@@ -19,6 +21,20 @@ namespace SupportHub.Api.Controllers
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserCommand request)
+        {
+            var response = await mediator.Send(request);
+            return Ok(response);
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand request)
+        {
+            var response = await mediator.Send(request);
+            return Ok(response);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] LogoutCommand request)
         {
             var response = await mediator.Send(request);
             return Ok(response);
