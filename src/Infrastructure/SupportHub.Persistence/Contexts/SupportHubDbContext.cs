@@ -12,6 +12,7 @@ public class SupportHubDbContext(DbContextOptions<SupportHubDbContext> options) 
     public DbSet<TicketComment> TicketComments { get; set; }
     public DbSet<TicketActivity> TicketActivities { get; set; }
     public DbSet<AppUser> AppUsers { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Ticket>().Property(t => t.Status).HasConversion<string>();
@@ -27,6 +28,9 @@ public class SupportHubDbContext(DbContextOptions<SupportHubDbContext> options) 
             .WithOne(a => a.Ticket)
             .HasForeignKey(a => a.TicketId)
             .OnDelete(DeleteBehavior.Cascade);
+        
         base.OnModelCreating(modelBuilder);
+        
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(SupportHubDbContext).Assembly);
     }
 }

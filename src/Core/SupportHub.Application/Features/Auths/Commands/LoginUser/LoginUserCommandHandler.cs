@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using SupportHub.Application.Abstractions.Repositories;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Domain.Entities.Identity;
 
@@ -9,6 +10,7 @@ namespace SupportHub.Application.Features.Auths.Commands.LoginUser;
 public class LoginUserCommandHandler(
     UserManager<AppUser> userManager,
     ITokenService tokenService,
+    IRefreshTokenRepository  refreshTokenRepository,
     ILogger<LoginUserCommandHandler> logger) : IRequestHandler<LoginUserCommand, LoginUserCommandResponse>
 {
     public async Task<LoginUserCommandResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
@@ -33,13 +35,27 @@ public class LoginUserCommandHandler(
             throw new Exception("Kullanıcının email adresi bulunamadı.");
         }
         var userRoles = await userManager.GetRolesAsync(user);
-        var responseCreateToken = tokenService.GenerateToken(user.Id, user.Email!, $"{user.FirstName} {user.LastName}",
-            userRoles, cancellationToken: cancellationToken);
         
-        logger.LogInformation("User with email: {Email} logged in successfully.", request.Email);
+        var accessToken = tokenService.GenerateToken(user.Id, user.Email!, $"{user.FirstName} {user.LastName}",
+            userRoles, cancellationToken: cancellationToken);
+        var refreshToken = tokenService.GenerateRefreshToken();
+        var refreshTokeHash = tokenService.HashRefreshToken(refreshToken);
+        
+        var refreshTokenEntity = new Domain.Entities.Identity.RefreshToken
+        {
+            UserId = user.Id,
+            TokenHash = refreshTokeHash,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedByIp = null
+        };
+        
+        await refreshTokenRepository.AddAsync(refreshTokenEntity);
+        
+        logger.LogInformation("User with email: {Email} and userid {UserId} logged in successfully.", request.Email, user.Id);
         return new LoginUserCommandResponse(
-            responseCreateToken.AccessToken, 
-            responseCreateToken.ExpireAt, 
+            accessToken.AccessToken, 
+            refreshToken,
+            accessToken.ExpireAt, 
             user.Id,
             user.Email, 
             $"{user.FirstName} {user.LastName}");
