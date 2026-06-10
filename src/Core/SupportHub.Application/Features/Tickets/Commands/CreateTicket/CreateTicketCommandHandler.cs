@@ -28,7 +28,8 @@ public class CreateTicketCommandHandler(
             Description = request.Description,
             Status = TicketStatusType.Open,
             Priority = request.Priority ?? TicketPriorityType.Medium,
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.UtcNow,
+            CreatedByUserId = currentService.UserId
         };
 
         var result = await ticketWriteRepository.CreateAsync(ticket);

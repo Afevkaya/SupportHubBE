@@ -251,46 +251,35 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         const string sql = """
             SELECT
-                t."Id", t."Title", t."Description", t."Status", t."Priority", t."CreatedDate", t."UpdatedDate",
-                c."Id", c."Message", c."AuthorUserId", c."TicketId", c."CreatedDate",
-                a."Id", a."ActivityType", a."Description", a."TicketId", a."CreatedDate"
-            FROM "Tickets" t
-            LEFT JOIN "TicketComments" c ON c."TicketId" = t."Id"
-            LEFT JOIN "TicketActivities" a ON a."TicketId" = t."Id"
-            WHERE t."Id" = @Id
-            ORDER BY c."CreatedDate" ASC, a."CreatedDate" ASC
+                "Id", "Title", "Description", "Status", "Priority", "CreatedDate", "UpdatedDate"
+            FROM "Tickets"
+            WHERE "Id" = @Id;
+
+            SELECT
+                "Id", "Message", "AuthorUserId", "TicketId", "CreatedDate"
+            FROM "TicketComments"
+            WHERE "TicketId" = @Id
+            ORDER BY "CreatedDate" ASC;
+
+            SELECT
+                "Id", "ActivityType", "Description", "TicketId", "CreatedDate"
+            FROM "TicketActivities"
+            WHERE "TicketId" = @Id
+            ORDER BY "CreatedDate" ASC;
             """;
 
-        var ticketLookup = new Dictionary<Guid, Ticket>();
+        await using var result = await connection.QueryMultipleAsync(sql, new { Id = id });
 
-        await connection.QueryAsync<Ticket, TicketComment, TicketActivity, Ticket>(
-            sql,
-            (ticket, comment, activity) =>
-            {
-                if (!ticketLookup.TryGetValue(ticket.Id, out var ticketEntry))
-                {
-                    ticketEntry = ticket;
-                    ticketEntry.TicketComments = new List<TicketComment>();
-                    ticketEntry.TicketActivities = new List<TicketActivity>();
-                    ticketLookup.Add(ticketEntry.Id, ticketEntry);
-                }
+        var ticket = await result.ReadSingleOrDefaultAsync<Ticket>();
+        if (ticket is null)
+        {
+            return null;
+        }
 
-                if (comment.Id != Guid.Empty && ticketEntry.TicketComments.All(c => c.Id != comment.Id))
-                {
-                    ticketEntry.TicketComments.Add(comment);
-                }
+        ticket.TicketComments = (await result.ReadAsync<TicketComment>()).ToList();
+        ticket.TicketActivities = (await result.ReadAsync<TicketActivity>()).ToList();
 
-                if (activity.Id != Guid.Empty && ticketEntry.TicketActivities.All(a => a.Id != activity.Id))
-                {
-                    ticketEntry.TicketActivities.Add(activity);
-                }
-
-                return ticketEntry;
-            },
-            new { Id = id },
-            splitOn: "Id,Id");
-
-        return ticketLookup.Values.FirstOrDefault();
+        return ticket;
     }
     public async Task<List<Ticket>> GetMyAssignedTicketsAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
