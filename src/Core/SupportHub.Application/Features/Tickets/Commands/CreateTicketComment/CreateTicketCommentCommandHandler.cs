@@ -8,6 +8,7 @@ using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.Constants;
 using SupportHub.Application.DTOs.Responses.Auths;
+using SupportHub.Application.Exceptions;
 using SupportHub.Domain.Entities;
 using SupportHub.Domain.Entities.Identity;
 
@@ -37,14 +38,20 @@ public class CreateTicketCommentCommandHandler(
             ? []
             : await userManager.GetRolesAsync(currentUser);
 
+        var isAdmin = roles.Contains(Roles.Admin);
+        var isCustomer = roles.Contains(Roles.Customer);
+        var isSupportAgent = roles.Contains(Roles.SupportAgent);
+
+        var isTicketOwner = ticket.CreatedByUserId == currentUserId;
+        var isAssignedAgent = ticket.AssignedAgentId == currentUserId;
+
         var canCreateComment =
-            roles.Contains(Roles.Admin) ||
-            roles.Contains(Roles.SupportAgent) ||
-            currentUserId == ticket.CreatedByUserId ||
-            currentUserId == ticket.AssignedAgentId;
+            isAdmin ||
+            (isCustomer && isTicketOwner) ||
+            (isSupportAgent && isAssignedAgent);
 
         if (!canCreateComment)
-            throw new UnauthorizedAccessException("Bu bileti yorumlamak için yetkiniz yok");
+            throw new ForbiddenAccessException("Bu bileti yorumlamak için yetkiniz yok");
         
         var ticketComment = new TicketComment
         {

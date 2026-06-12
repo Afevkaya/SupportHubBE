@@ -6,13 +6,24 @@ namespace SupportHub.Application.Abstractions.Repositories.Tickets;
 
 public interface ITicketReadRepository
 {
-    Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, Guid? userId, string sortBy = "CreatedDate",
-        string sortDirection = "desc", string? status = null, string priority = "", string search = "");
-    Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, Guid? userId,
-        string sortBy = "CreatedDate", string sortDirection = "desc",
+    Task<GetAllTicketsQueryResponse> GetAllAsync(int page,
+        int pageSize,
+        Guid? createdByUserId,
+        Guid? assignedAgentId,
+        string sortBy = "CreatedDate",
+        string sortDirection = "desc",
+        string? status = null,
+        string priority = "",
+        string search = "");
+    Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page,
+        int pageSize,
+        Guid? createdByUserId,
+        Guid? assignedAgentId,
+        string sortBy = "CreatedDate",
+        string sortDirection = "desc",
         CancellationToken cancellationToken = default);
     Task<Ticket?> GetTicketAsync(Guid id);
-    Task<Ticket?> GetTicketDetail(Guid id);
+    Task<Ticket?> GetTicketDetail(Guid id, Guid? createdByUserId, Guid? assignedAgentId);
     Task<List<Ticket>> GetMyAssignedTicketsAsync(Guid agentId, CancellationToken cancellationToken = default);
     Task<bool> AnyTicketAsync(Guid id);
 }

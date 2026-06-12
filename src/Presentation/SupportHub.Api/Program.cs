@@ -8,6 +8,7 @@ using SupportHub.Api.Middlewares;
 using SupportHub.Application.Extensions;
 using SupportHub.Infrastructure.Extensions;
 using System.Text;
+using SupportHub.Api.Extensions;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -46,6 +47,7 @@ try
     builder.Services.AddApplicationServices();
     builder.Services.AddPersistenceServices(builder.Configuration);
     builder.Services.AddInfrastructureServices();
+    builder.Services.AddPresentationServices();
     builder.Services.AddMemoryCache();
     builder.Services.AddHealthChecks()
         .AddNpgSql(builder.Configuration.GetConnectionString("PostgresSql") ?? "", name: "PostgreSQL", tags: ["db", "sql", "postgres"
