@@ -3,6 +3,7 @@ using System.Security.Authentication;
 using System.Text.Json;
 using FluentValidation;
 using SupportHub.Api.Models.Responses;
+using SupportHub.Application.Exceptions;
 
 namespace SupportHub.Api.Middlewares;
 
@@ -54,7 +55,9 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                     ArgumentException or
                     FormatException
                     => (int)HttpStatusCode.BadRequest,
-
+                
+                ForbiddenAccessException => (int)HttpStatusCode.Forbidden,
+                
                 AuthenticationException or
                     UnauthorizedAccessException
                     => (int)HttpStatusCode.Unauthorized,
@@ -62,7 +65,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                 ValidationException or
                     InvalidOperationException
                     => (int)HttpStatusCode.BadRequest,
-
+                
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
@@ -76,7 +79,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                         statusCode = v;
                     
                 }
-                catch (Exception ex)
+                catch
                 {
                     // ignored
                 }

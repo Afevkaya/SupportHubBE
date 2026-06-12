@@ -10,7 +10,7 @@ namespace SupportHub.Api.Controllers
 {
     [Route("api/auths")]
     [ApiController]
-    public class AuthsController(IMediator mediator, ICurrentService currentService) : ControllerBase
+    public class AuthsController(IMediator mediator) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserCommand request)

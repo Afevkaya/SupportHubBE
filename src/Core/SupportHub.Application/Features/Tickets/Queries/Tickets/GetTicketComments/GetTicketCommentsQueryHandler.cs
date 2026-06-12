@@ -6,6 +6,7 @@ using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.Abstractions.Services;
 using SupportHub.Application.Constants;
 using SupportHub.Application.DTOs.Responses.Auths;
+using SupportHub.Application.Exceptions;
 using SupportHub.Domain.Entities.Identity;
 
 namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketComments;
@@ -30,14 +31,21 @@ public class GetTicketCommentsQueryHandler(
         var roles = currentUser is null
             ? []
             : await userManager.GetRolesAsync(currentUser);
+        
+        var isAdmin = roles.Contains(Roles.Admin);
+        var isCustomer = roles.Contains(Roles.Customer);
+        var isSupportAgent =  roles.Contains(Roles.SupportAgent);
+        
+        var isTicketOwner = ticket.CreatedByUserId == currentUserId;
+        var isAssignedAgent = ticket.AssignedAgentId == currentUserId;
 
         var canViewComments =
-            roles.Contains(Roles.Admin) ||
-            currentUserId == ticket.CreatedByUserId ||
-            currentUserId == ticket.AssignedAgentId;
+            isAdmin ||
+            (isCustomer && isTicketOwner) ||
+            (isSupportAgent && isAssignedAgent);
         
         if (!canViewComments)
-            throw new UnauthorizedAccessException("Bu bileti görüntüleme yetkiniz yok");
+            throw new ForbiddenAccessException("Bu bileti görüntüleme yetkiniz yok");
         
         var comments = await ticketCommentReadRepository.GetCommentsByTicketIdAsync(request.TicketId, cancellationToken);
 

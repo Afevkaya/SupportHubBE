@@ -12,7 +12,8 @@ namespace Persistence.Repositories.Tickets;
 
 public class TicketReadRepository(IConfiguration configuration) : ITicketReadRepository
 {
-    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, Guid? userId,
+    public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, Guid? createdByUserId,
+        Guid? assignedAgentId,
         string sortBy = "CreatedDate",
         string sortDirection = "desc", string? status = null, string priority = "", string search = "")
     {
@@ -28,10 +29,16 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         var parameters = new DynamicParameters();
         var whereConditions = new List<string>();
         
-        if (userId.HasValue)        
+        if (createdByUserId.HasValue)
         {
-            whereConditions.Add("\"CreatedByUserId\" = @UserId");
-            parameters.Add("UserId", userId.Value);
+            whereConditions.Add("\"CreatedByUserId\" = @CreatedByUserId");
+            parameters.Add("CreatedByUserId", createdByUserId.Value);
+        }
+
+        if (assignedAgentId.HasValue)
+        {
+            whereConditions.Add("\"AssignedAgentId\" = @AssignedAgentId");
+            parameters.Add("AssignedAgentId", assignedAgentId.Value);
         }
 
         // Status: int değerini enum'a çevir, sonra string'e dönüştür
@@ -138,7 +145,8 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             totalPages);
     }
 
-    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, Guid? userId, 
+    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, Guid? createdByUserId,
+        Guid? assignedAgentId,
         string sortBy = "CreatedDate", string sortDirection = "desc",
         CancellationToken cancellationToken = default)
     {
@@ -158,11 +166,16 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         };
         parameters.Add("Status", TicketStatusType.Open.ToString());
 
-        if (userId.HasValue)
+        if(createdByUserId.HasValue)
         {
-            // limit to tickets created by this user
-            whereConditions.Add("\"CreatedByUserId\" = @UserId");
-            parameters.Add("UserId", userId.Value);
+            whereConditions.Add("\"CreatedByUserId\" = @CreatedByUserId");
+            parameters.Add("CreatedByUserId", createdByUserId.Value);
+        }
+
+        if (assignedAgentId.HasValue)
+        {
+            whereConditions.Add("\"AssignedAgentId\" = @AssignedAgentId");
+            parameters.Add("AssignedAgentId", assignedAgentId.Value);
         }
 
         var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
@@ -242,7 +255,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 
         return ticket ?? throw new KeyNotFoundException("Ticket bulunamadı");
     }
-    public async Task<Ticket?> GetTicketDetail(Guid id)
+    public async Task<Ticket?> GetTicketDetail(Guid id, Guid? createdByUserId, Guid? assignedAgentId)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql")
             ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
@@ -253,7 +266,9 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             SELECT
                 "Id", "Title", "Description", "Status", "Priority", "CreatedDate", "UpdatedDate"
             FROM "Tickets"
-            WHERE "Id" = @Id;
+            WHERE "Id" = @Id
+              AND (@CreatedByUserId IS NULL OR "CreatedByUserId" = @CreatedByUserId)
+              AND (@AssignedAgentId IS NULL OR "AssignedAgentId" = @AssignedAgentId);
 
             SELECT
                 "Id", "Message", "AuthorUserId", "TicketId", "CreatedDate"
@@ -268,7 +283,8 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             ORDER BY "CreatedDate" ASC;
             """;
 
-        await using var result = await connection.QueryMultipleAsync(sql, new { Id = id });
+        await using var result = await connection.QueryMultipleAsync(sql,
+            new { Id = id, CreatedByUserId = createdByUserId, AssignedAgentId = assignedAgentId });
 
         var ticket = await result.ReadSingleOrDefaultAsync<Ticket>();
         if (ticket is null)
