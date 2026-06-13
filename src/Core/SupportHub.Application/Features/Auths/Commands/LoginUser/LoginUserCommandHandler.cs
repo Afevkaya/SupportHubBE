@@ -55,7 +55,7 @@ public class LoginUserCommandHandler(
         return new LoginUserCommandResponse(
             accessToken.AccessToken, 
             refreshToken,
-            accessToken.ExpireAt, 
+            accessToken.ExpirationAt, 
             user.Id,
             user.Email, 
             $"{user.FirstName} {user.LastName}");

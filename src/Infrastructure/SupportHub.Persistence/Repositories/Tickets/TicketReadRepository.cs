@@ -3,8 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using SupportHub.Application.Abstractions.Repositories.Tickets;
 using SupportHub.Application.DTOs.Responses.Tickets;
-using SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
-using SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
+using SupportHub.Application.Features.Tickets.Queries.GetAllTickets;
 using SupportHub.Domain.Entities;
 using SupportHub.Domain.Enums;
 
@@ -14,8 +13,8 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
 {
     public async Task<GetAllTicketsQueryResponse> GetAllAsync(int page, int pageSize, Guid? createdByUserId,
         Guid? assignedAgentId,
-        string sortBy = "CreatedDate",
-        string sortDirection = "desc", string? status = null, string priority = "", string search = "")
+        string? sortBy = "createdDate",
+        string? sortDirection = "desc", string? status = null, string? priority = null, string? search = null)
     {
         if (page <= 0) page = 1;
         if (pageSize <= 0) pageSize = 10;
@@ -41,39 +40,25 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             parameters.Add("AssignedAgentId", assignedAgentId.Value);
         }
 
-        // Status: int değerini enum'a çevir, sonra string'e dönüştür
+        // Status değerini enum'a çevir, sonra string'e dönüştür
         if (!string.IsNullOrWhiteSpace(status))
         {
-            if (int.TryParse(status, out var statusValue))
+            if (Enum.TryParse<TicketStatusType>(status, true, out var statusEnum) &&
+                Enum.IsDefined(typeof(TicketStatusType), statusEnum))
             {
-                try
-                {
-                    var statusEnum = (TicketStatusType)statusValue;
-                    whereConditions.Add("\"Status\" = @Status");
-                    parameters.Add("Status", statusEnum.ToString());
-                }
-                catch
-                {
-                    // Geçersiz enum değeri, filtre uygulanmaz
-                }
+                whereConditions.Add("\"Status\" = @Status");
+                parameters.Add("Status", statusEnum.ToString());
             }
         }
         
-        // Priority: int değerini enum'a çevir, sonra string'e dönüştür
+        // Priority değerini enum'a çevir, sonra string'e dönüştür
         if (!string.IsNullOrWhiteSpace(priority))
         {
-            if (int.TryParse(priority, out var priorityValue))
+            if (Enum.TryParse<TicketPriorityType>(priority, true, out var priorityEnum) &&
+                Enum.IsDefined(typeof(TicketPriorityType), priorityEnum))
             {
-                try
-                {
-                    var priorityEnum = (TicketPriorityType)priorityValue;
-                    whereConditions.Add("\"Priority\" = @Priority");
-                    parameters.Add("Priority", priorityEnum.ToString());
-                }
-                catch
-                {
-                    // Geçersiz enum değeri, filtre uygulanmaz
-                }
+                whereConditions.Add("\"Priority\" = @Priority");
+                parameters.Add("Priority", priorityEnum.ToString());
             }
         }
 
@@ -145,99 +130,6 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             totalPages);
     }
 
-    public async Task<GetOpenTicketsQueryResponse> GetOpenTicketsAsync(int page, int pageSize, Guid? createdByUserId,
-        Guid? assignedAgentId,
-        string sortBy = "CreatedDate", string sortDirection = "desc",
-        CancellationToken cancellationToken = default)
-    {
-        if (page <= 0) page = 1;
-        if (pageSize <= 0) pageSize = 10;
-
-        var connectionString = configuration.GetConnectionString("PostgresSql")
-                               ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
-
-        await using var connection = new NpgsqlConnection(connectionString);
-
-        // Build where clause (Status is always Open for this method)
-        var parameters = new DynamicParameters();
-        var whereConditions = new List<string>
-        {
-            "\"Status\" = @Status"
-        };
-        parameters.Add("Status", TicketStatusType.Open.ToString());
-
-        if(createdByUserId.HasValue)
-        {
-            whereConditions.Add("\"CreatedByUserId\" = @CreatedByUserId");
-            parameters.Add("CreatedByUserId", createdByUserId.Value);
-        }
-
-        if (assignedAgentId.HasValue)
-        {
-            whereConditions.Add("\"AssignedAgentId\" = @AssignedAgentId");
-            parameters.Add("AssignedAgentId", assignedAgentId.Value);
-        }
-
-        var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
-
-        // Total count
-        var countSql = $"""
-            SELECT COUNT(1)
-            FROM "Tickets"
-            {whereClause}
-            """;
-
-        var totalCount = await connection.QuerySingleAsync<int>(countSql, parameters);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-        if (totalPages > 0 && page > totalPages)
-        {
-            page = totalPages;
-        }
-
-        // Sorting
-        var sortColumn = sortBy?.ToLowerInvariant() switch
-        {
-            "title" => "\"Title\"",
-            "status" => "\"Status\"",
-            "createddate" => "\"CreatedDate\"",
-            "priority" => "\"Priority\"",
-            _ => "\"CreatedDate\""
-        };
-        var direction = sortDirection?.ToLowerInvariant() == "asc" ? "ASC" : "DESC";
-
-        // Pagination
-        var offset = (page - 1) * pageSize;
-        parameters.Add("PageSize", pageSize);
-        parameters.Add("Offset", offset);
-
-        var sql = $"""
-            SELECT "Id", "Title", "Status", "Priority", "CreatedDate"
-            FROM "Tickets"
-            {whereClause}
-            ORDER BY {sortColumn} {direction}
-            LIMIT @PageSize OFFSET @Offset
-            """;
-
-        var rows = await connection.QueryAsync<TicketRow>(sql, parameters);
-
-        var items = rows
-            .Select(x => new ResponseGetTicket(
-                x.Id,
-                x.Title,
-                x.Status,
-                x.Priority,
-                x.CreatedDate))
-            .ToList();
-
-        return new GetOpenTicketsQueryResponse(
-            items,
-            page,
-            pageSize,
-            totalCount,
-            totalPages);
-    }
-
     public async Task<Ticket?> GetTicketAsync(Guid id)
     {
         var connectionString = configuration.GetConnectionString("PostgresSql")
@@ -251,9 +143,7 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
             WHERE "Id" = @Id
             """;
 
-        var ticket = await connection.QuerySingleOrDefaultAsync<Ticket>(sql, new { Id = id });
-
-        return ticket ?? throw new KeyNotFoundException("Ticket bulunamadı");
+        return await connection.QuerySingleOrDefaultAsync<Ticket>(sql, new { Id = id });
     }
     public async Task<Ticket?> GetTicketDetail(Guid id, Guid? createdByUserId, Guid? assignedAgentId)
     {
@@ -296,20 +186,6 @@ public class TicketReadRepository(IConfiguration configuration) : ITicketReadRep
         ticket.TicketActivities = (await result.ReadAsync<TicketActivity>()).ToList();
 
         return ticket;
-    }
-    public async Task<List<Ticket>> GetMyAssignedTicketsAsync(Guid agentId, CancellationToken cancellationToken = default)
-    {
-        var connectionString = configuration.GetConnectionString("PostgresSql") 
-            ?? throw new InvalidOperationException("Connection string 'PostgresSql' was not found.");
-        await using var connection = new NpgsqlConnection(connectionString);
-        var sql = """
-                  SELECT "Id", "Title", "Status", "CreatedDate"
-                  FROM "Tickets"
-                  WHERE "AssignedAgentId" = @AgentId
-                  ORDER BY "CreatedDate" DESC
-                  """;
-        var agentTickets = await connection.QueryAsync<Ticket>(sql, new { AgentId = agentId });
-        return agentTickets.ToList();
     }
     public async Task<bool> AnyTicketAsync(Guid id)
     {

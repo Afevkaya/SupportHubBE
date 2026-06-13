@@ -8,7 +8,7 @@ using SupportHub.Application.DTOs.Responses.Tickets;
 using SupportHub.Application.Exceptions;
 using SupportHub.Domain.Entities.Identity;
 
-namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketDetail;
+namespace SupportHub.Application.Features.Tickets.Queries.GetTicketDetail;
 
 public class GetTicketDetailQueryHandler(
     ITicketReadRepository ticketReadRepository,

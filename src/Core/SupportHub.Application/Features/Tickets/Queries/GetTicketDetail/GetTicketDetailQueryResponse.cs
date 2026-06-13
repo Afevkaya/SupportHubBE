@@ -1,6 +1,6 @@
 ﻿using SupportHub.Application.DTOs.Responses.Tickets;
 
-namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketDetail;
+namespace SupportHub.Application.Features.Tickets.Queries.GetTicketDetail;
 
 public record GetTicketDetailQueryResponse(
     Guid Id, 

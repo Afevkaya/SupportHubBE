@@ -1,5 +1,4 @@
-﻿using SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketComments;
-using SupportHub.Domain.Entities;
+﻿using SupportHub.Domain.Entities;
 
 namespace SupportHub.Application.Abstractions.Repositories.TicketComments;
 

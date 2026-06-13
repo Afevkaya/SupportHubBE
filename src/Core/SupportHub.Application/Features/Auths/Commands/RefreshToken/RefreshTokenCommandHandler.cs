@@ -90,6 +90,6 @@ public class RefreshTokenCommandHandler(
             user.Id,
             storedRefreshToken.Id);
         
-        return new RefreshTokenCommandResponse(newAccessToken.AccessToken, newRefreshToken, newAccessToken.ExpireAt);
+        return new RefreshTokenCommandResponse(newAccessToken.AccessToken, newRefreshToken, newAccessToken.ExpirationAt);
     }
 }

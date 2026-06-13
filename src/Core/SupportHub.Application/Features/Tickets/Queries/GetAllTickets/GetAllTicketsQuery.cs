@@ -1,15 +1,15 @@
 using SupportHub.Application.Abstractions.Messaging;
 
-namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetAllTickets;
+namespace SupportHub.Application.Features.Tickets.Queries.GetAllTickets;
 
 public record GetAllTicketsQuery(
-    int Page,
-    int PageSize,
-    string? Status,
-    string Search,
-    string Priority,
-    string SortBy,
-    string SortDirection)
+    int Page = 1,
+    int PageSize = 10,
+    string? Status = null,
+    string? Search = null,
+    string? Priority = null,
+    string? SortBy = "createdDate",
+    string? SortDirection = "desc")
     : IQuery<GetAllTicketsQueryResponse>, ICacheableQuery
 {
     string ICacheableQuery.GetCacheKey(Guid? currentUserId) =>

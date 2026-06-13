@@ -1,6 +1,6 @@
 ﻿using SupportHub.Application.Abstractions.Messaging;
 
-namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketComments;
+namespace SupportHub.Application.Features.Tickets.Queries.GetTicketComments;
 
 public record GetTicketCommentsQuery(Guid TicketId) : IQuery<List<GetTicketCommentsQueryResponse>>, ICacheableQuery
 {
