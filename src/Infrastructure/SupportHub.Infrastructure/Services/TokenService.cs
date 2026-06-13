@@ -61,7 +61,7 @@ public class TokenService(IConfiguration configuration, ILogger<TokenService> lo
         return new ResponseCreateToken
         {
             AccessToken = accessToken,
-            ExpireAt = expiration
+            ExpirationAt = expiration
         };
     }
     public string GenerateRefreshToken()

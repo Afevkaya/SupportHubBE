@@ -7,34 +7,34 @@ using SupportHub.Application.Constants;
 using SupportHub.Application.Exceptions;
 using SupportHub.Domain.Entities.Identity;
 
-namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetOpenTickets;
+namespace SupportHub.Application.Features.Tickets.Queries.GetAllTickets;
 
-public class GetOpenTicketsQueryHandler(
-    ITicketReadRepository ticketReadRepository, 
-    ICurrentService currentService,
+public class GetAllTicketsQueryHandler(
+    ITicketReadRepository ticketReadRepository,
     UserManager<AppUser> userManager,
-    ILogger<GetOpenTicketsQueryHandler> logger) : IRequestHandler<GetOpenTicketsQuery, GetOpenTicketsQueryResponse>
+    ICurrentService currentService,
+    ILogger<GetAllTicketsQueryHandler> logger) : IRequestHandler<GetAllTicketsQuery, GetAllTicketsQueryResponse>
 {
-    public async Task<GetOpenTicketsQueryResponse> Handle(GetOpenTicketsQuery request, CancellationToken cancellationToken)
+    public async Task<GetAllTicketsQueryResponse> Handle(GetAllTicketsQuery request, CancellationToken cancellationToken)
     {
         var user = await userManager.FindByIdAsync(currentService.UserId.ToString() ?? string.Empty);
         IList<string> roles = new List<string>();
         if (user != null)
-        {
             roles = await userManager.GetRolesAsync(user);
-        }
         
-        GetOpenTicketsQueryResponse response;
-        var currentUserId = currentService.UserId
-                            ?? throw new UnauthorizedAccessException("Kullanıcı bilgisi bulunamadı");
 
+        GetAllTicketsQueryResponse response;
+
+        var currentUserId = currentService.UserId ??
+                            throw new UnauthorizedAccessException("Kullanıcı bilgisi bulunamadı");
+        
         var isAdmin = roles.Contains(Roles.Admin);
         var isCustomer = roles.Contains(Roles.Customer);
         var isSupportAgent = roles.Contains(Roles.SupportAgent);
-
+        
         Guid? createdByUserId = null;
         Guid? assignedAgentId = null;
-
+        
         if (isAdmin)
         {
             // scope yok, tüm ticketlar
@@ -49,20 +49,22 @@ public class GetOpenTicketsQueryHandler(
         }
         else
         {
-            throw new ForbiddenAccessException("Açık biletleri görüntüleme yetkiniz yok");
+            throw new ForbiddenAccessException("Tüm bilet listesini görüntüleme yetkiniz yok");
         }
-        
-        response = await ticketReadRepository.GetOpenTicketsAsync(
-            request.Page,
-            request.PageSize,
-            createdByUserId,
-            assignedAgentId,
-            request.SortBy,
-            request.SortDirection,
-            cancellationToken);
-        
+
+        response = await ticketReadRepository.GetAllAsync(
+            page: request.Page,
+            pageSize: request.PageSize,
+            createdByUserId: createdByUserId,
+            assignedAgentId: assignedAgentId,
+            sortBy: request.SortBy,
+            sortDirection: request.SortDirection,
+            status: request.Status,
+            priority: request.Priority,
+            search: request.Search);
+
         logger.LogInformation(
-            "Open tickets retrieved with pagination. Properties: UserId: {UserId}, Roles: {Roles}, IsCustomerScoped: {IsCustomerScoped}, Page: {Page}, PageSize: {PageSize}, SortBy: {SortBy}, SortDirection: {SortDirection}, TotalCount: {TotalCount}, ReturnedItemCount: {ReturnedItemCount}",
+            "Tickets retrieved. Properties: UserId: {UserId}, Roles: {Roles}, IsCustomerScoped: {IsCustomerScoped}, Page: {Page}, PageSize: {PageSize}, SortBy: {SortBy}, SortDirection: {SortDirection}, Status: {Status}, Search: {Search}, Priority: {Priority} TotalCount: {TotalCount}, ReturnedItemCount: {ReturnedItemCount}",
             currentService.UserId,
             string.Join(", ", roles),
             currentService.UserId != null && !roles.Contains(Roles.Admin) && !roles.Contains(Roles.SupportAgent),
@@ -70,8 +72,12 @@ public class GetOpenTicketsQueryHandler(
             request.PageSize,
             request.SortBy,
             request.SortDirection,
+            request.Status,
+            request.Search,
+            request.Priority,
             response.TotalCount,
             response.Items.Count);
+
         return response;
     }
 }

@@ -21,6 +21,9 @@ public class CreateTicketCommandHandler(
 {
     public async Task<ResponseCreateTicket> Handle(CreateTicketCommand request, CancellationToken cancellationToken)
     {
+        var currenUserId = currentService.UserId ??
+                           throw new UnauthorizedAccessException("Kullanıcı bilgisi bulunamadı");
+        var currentUserName = currentService.FullName ?? "Bilinmeyen Kullanıcı";
         var ticket = new Ticket
         {
             Id = Guid.NewGuid(),
@@ -29,7 +32,7 @@ public class CreateTicketCommandHandler(
             Status = TicketStatusType.Open,
             Priority = request.Priority ?? TicketPriorityType.Medium,
             CreatedDate = DateTime.UtcNow,
-            CreatedByUserId = currentService.UserId
+            CreatedByUserId = currenUserId
         };
 
         var result = await ticketWriteRepository.CreateAsync(ticket);
@@ -38,7 +41,7 @@ public class CreateTicketCommandHandler(
         {
             Id = Guid.NewGuid(),
             TicketId = result.Id,
-            ActorUserId = currentService.UserId,
+            ActorUserId = currenUserId,
             ActivityType = TicketActivityType.Created,
             Description = $"Ticket created with status {result.Status} and priority {result.Priority}",
             CreatedDate = DateTime.UtcNow
@@ -52,7 +55,7 @@ public class CreateTicketCommandHandler(
             result.Status.ToString(),
             result.Priority.ToString(),
             result.CreatedDate,
-            new ResponseGetAuth(currentService?.UserId, currentService?.FullName)
+            new ResponseGetAuth(currenUserId, currentUserName)
         );
         await cacheService.RemoveByPrefixAsync("tickets_", cancellationToken);
         logger.LogInformation("Ticket created with Id: {Id}, Status: {Status}, Priority: {Priority}, UserId: {UserId}", result.Id, result.Status, result.Priority, currentService?.UserId);

@@ -3,4 +3,6 @@ using SupportHub.Application.Abstractions.Messaging;
 
 namespace SupportHub.Application.Features.Tickets.Commands.AssignTicket;
 
-public record AssignTicketCommand([property: JsonIgnore] Guid TicketId, Guid AssignedAgentId) : ICommand<AssignTicketCommandResponse>;
+public record AssignTicketCommand(
+    [property: JsonIgnore] Guid TicketId, 
+    Guid AssignedAgentId) : ICommand<AssignTicketCommandResponse>;

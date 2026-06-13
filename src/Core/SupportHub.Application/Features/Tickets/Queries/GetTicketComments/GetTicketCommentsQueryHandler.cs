@@ -9,7 +9,7 @@ using SupportHub.Application.DTOs.Responses.Auths;
 using SupportHub.Application.Exceptions;
 using SupportHub.Domain.Entities.Identity;
 
-namespace SupportHub.Application.Features.Tickets.Queries.Tickets.GetTicketComments;
+namespace SupportHub.Application.Features.Tickets.Queries.GetTicketComments;
 
 public class GetTicketCommentsQueryHandler(
     ITicketCommentReadRepository ticketCommentReadRepository,

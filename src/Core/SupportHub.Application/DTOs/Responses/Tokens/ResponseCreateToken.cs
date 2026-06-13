@@ -2,6 +2,6 @@
 
 public class ResponseCreateToken
 {
-    public string AccessToken { get; set; }
-    public DateTime ExpireAt { get; set; }
+    public string AccessToken { get; set; } = string.Empty;
+    public DateTime ExpirationAt { get; set; }
 }
