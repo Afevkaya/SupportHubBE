@@ -58,7 +58,8 @@ public class LoginUserCommandHandler(
             accessToken.ExpirationAt, 
             user.Id,
             user.Email, 
-            $"{user.FirstName} {user.LastName}");
+            $"{user.FirstName} {user.LastName}",
+            userRoles.ToList());
 
     }
 }
