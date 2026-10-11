@@ -6,4 +6,5 @@ public record LoginUserCommandResponse(
     DateTime ExpirationAt, 
     Guid UserId, 
     string Email, 
-    string FullName);
+    string FullName,
+    IReadOnlyList<string> Roles);

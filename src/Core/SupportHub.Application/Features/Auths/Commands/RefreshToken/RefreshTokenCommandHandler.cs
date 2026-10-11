@@ -60,12 +60,14 @@ public class RefreshTokenCommandHandler(
             logger.LogWarning("Invalid refresh token attempt. Reason: {Reason}", "Invalid refresh token.");
             throw new UnauthorizedAccessException("Invalid refresh token.");
         }
-
+        
+        var userRoles = await userManager.GetRolesAsync(user);
+       
         ResponseCreateToken? newAccessToken = null;
         if (user.Email != null)
         {
             newAccessToken = tokenService.GenerateToken(user.Id, user.Email,
-                $"{user.FirstName} {user.LastName}", await userManager.GetRolesAsync(user), cancellationToken);
+                $"{user.FirstName} {user.LastName}", userRoles, cancellationToken);
         }
         if(newAccessToken is  null)
             throw new InvalidOperationException("Failed to generate new access token.");
@@ -89,7 +91,8 @@ public class RefreshTokenCommandHandler(
             "Refresh token rotated successfully. UserId: {UserId}, RefreshTokenId: {RefreshTokenId}",
             user.Id,
             storedRefreshToken.Id);
-        
-        return new RefreshTokenCommandResponse(newAccessToken.AccessToken, newRefreshToken, newAccessToken.ExpirationAt);
+
+        return new RefreshTokenCommandResponse(newAccessToken.AccessToken, newRefreshToken, newAccessToken.ExpirationAt,
+            userRoles.ToList());
     }
 }
